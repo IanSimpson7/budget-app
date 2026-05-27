@@ -54,7 +54,7 @@ All values multiples of 4. Tailwind custom token names prefixed `sp-` to disting
 
 Exceptions:
 - Touch targets (buttons, inputs, nav items): minimum height 44px, minimum tap area 44×44px — enforced by `min-h-[44px]` and `py-[10px]` (10px top + 10px bottom + 24px content = 44px) on all interactive elements. This is a mobile-first hard requirement from CONTEXT.md §Specifics.
-- Input horizontal padding: 12px (`sp-3`) — not on the 8-point scale, but justified for number input legibility at mono font size.
+- Input horizontal padding: 12px (`sp-3`) — not on the 8-point scale, but justified for number input legibility at mono font size. This justification must not be removed.
 
 ---
 
@@ -77,11 +77,13 @@ Three typefaces only. All available on Google Fonts.
 | Label (field labels, nav labels) | IBM Plex Sans | 14px | 600 (SemiBold) | 1.4 | `font-sans text-sm font-semibold leading-[1.4]` |
 | Body / helper | IBM Plex Sans | 14px | 400 (Regular) | 1.5 | `font-sans text-sm leading-[1.5]` |
 | Financial value (amounts, dates) | IBM Plex Mono | 16px | 400 (Regular) | 1.4 | `font-mono text-base leading-[1.4]` |
-| Financial value — prominent (input display, key figures) | IBM Plex Mono | 20px | 500 (Medium) | 1.3 | `font-mono text-[20px] font-medium leading-[1.3]` |
+| Financial value — prominent (input display, key figures) | IBM Plex Sans | 20px | 600 (SemiBold) | 1.3 | `font-sans text-[20px] font-semibold leading-[1.3]` |
+
+Note on prominent financial value: IBM Plex Mono does not have a 600-weight variant. To maintain the two-weight system (400 and 600 only), the prominent financial value row uses IBM Plex Sans at 600 rather than introducing weight 500. The semantic intent — "this number is important" — is carried by size (20px vs 16px) and weight (600 vs 400), which is sufficient visual differentiation. Mono rendering is retained for all standard financial values (16px, weight 400); the prominent size shifts to IBM Plex Sans to honour the weight constraint.
 
 Tabular figures: IBM Plex Mono uses tabular figures by default — no `font-variant-numeric: tabular-nums` override needed. Confirm with `font-feature-settings: "tnum"` in Tailwind config as a belt-and-suspenders.
 
-Max declared sizes: 28px, 20px, 16px, 14px — four sizes, two font weights (400 and 600; 500 used only in financial prominent context).
+Max declared sizes: 28px, 20px, 16px, 14px — four sizes, two font weights: 400 (Regular) and 600 (SemiBold) only.
 
 ---
 
@@ -139,6 +141,20 @@ Exception allowed: focus ring shadow (`box-shadow: 0 0 0 2px #c0522a`) as access
 
 ---
 
+## Phase 1 Screens
+
+### Settings Surface
+
+Primary focal point: the app name ("Budget") rendered in DM Serif Display 28px at the top of the page header. This is the first element Ian sees on load and anchors the visual hierarchy before any inputs are reached.
+
+Layout: single-column card (Panel spec below). Three number inputs stacked vertically — passive floor, defended line, food floor seed — with "Save settings" primary CTA at the bottom of the panel.
+
+### Backup Surface
+
+Layout: single-column card. Two sections: Export (primary CTA) and Import (secondary CTA + conditional replace-warning state). No tabs.
+
+---
+
 ## Component Specifications
 
 ### Button — Primary (CTA)
@@ -162,7 +178,7 @@ transition: background-color 150ms ease
 
 ### Button — Secondary
 
-Used for: Import backup (triggers file picker), Cancel actions.
+Used for: Import backup (triggers file picker), Cancel import.
 
 ```
 bg: transparent
@@ -202,9 +218,9 @@ Used for: Passive floor, defended line, food floor seed inputs.
 
 ```
 bg: #201c19
-text: IBM Plex Mono, 20px, weight 500, #e8dcc8
+text: IBM Plex Sans, 20px, weight 600, #e8dcc8
 height: min 44px (py-[10px] + content)
-padding: 10px 12px
+padding: 10px 12px  (12px horizontal — sp-3, justified for mono/sans input legibility)
 border: 1px solid #332d28
 border-radius: 2px
 placeholder: IBM Plex Mono, 16px, #5a524c
@@ -349,7 +365,7 @@ Google Fonts import (add to `index.html` or global CSS):
 ```html
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@400&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
 ```
 
 ---
@@ -368,7 +384,7 @@ Phase 1 surfaces: Settings and Backup only.
 | Import replace warning heading | This will replace all current data | Shown before file picker opens — in-panel, not modal |
 | Import replace body | Your current data cannot be recovered after import. Export a backup first if needed. | IBM Plex Sans, 14px, #9a8e82 |
 | Import confirm CTA | Replace and import | Destructive button — explicit about the replace action |
-| Import cancel | Cancel | Secondary button |
+| Import cancel | Cancel import | Secondary button |
 | Import success toast | Backup imported. Data restored. | IBM Plex Sans, 14px, success border |
 | Import error — version too new | This backup was created by a newer version of the app. Update the app to import it. | IBM Plex Sans, 14px, error border |
 | Import error — invalid file | File could not be read. Check the file is a valid budget backup. | IBM Plex Sans, 14px, error border |
@@ -376,7 +392,7 @@ Phase 1 surfaces: Settings and Backup only.
 | Passive floor label | Passive income floor | Below: "Solvency baseline — income needed to stay solvent" |
 | Defended line label | Defended line | Below: "Backfill triggers above this threshold — default $3,000" |
 | Food floor seed label | Food floor seed | Below: "Starting estimate — refines from receipts in Phase 4" |
-| Settings save CTA | Save | Primary button |
+| Settings save CTA | Save settings | Primary button |
 | Settings save success | Settings saved. | Toast — no page reload |
 | Empty states | None needed in Phase 1 — inputs always show stored or default values | — |
 
@@ -395,7 +411,7 @@ Input number validation: passive floor and defended line must be > 0; food floor
 Import flow state machine:
 1. Default: Secondary "Import backup" button
 2. File picker open (browser native): no custom UI
-3. File selected: show replace warning + "Replace and import" (destructive) + "Cancel" (secondary)
+3. File selected: show replace warning + "Replace and import" (destructive) + "Cancel import" (secondary)
 4. Processing: button shows "Importing..." disabled state, spinner (lucide Loader2 icon, 16px, animate-spin)
 5. Success: toast success, state reset to default
 6. Error: toast error with specific message, state reset to default
@@ -419,7 +435,7 @@ Icon library (lucide-react): installed via npm, not a registry. MIT licensed. So
 
 These decisions must hold through Phase 5. Executor must not override them in later phases without a design revision.
 
-- The Settings surface will gain additional fields in Phases 2–3 (income floors, expense parameters). The panel pattern (card, full-width inputs, single Save CTA) scales by adding fields — do not introduce tabs or nested navigation within settings.
+- The Settings surface will gain additional fields in Phases 2–3 (income floors, expense parameters). The panel pattern (card, full-width inputs, single Save settings CTA) scales by adding fields — do not introduce tabs or nested navigation within settings.
 - Phase 2 introduces the dashboard. Dashboard uses the same surface/raised color system. Financial data on the dashboard MUST use IBM Plex Mono — no exceptions for "cleaner" sans presentation of numbers.
 - Phase 4's locked food floor UI (FOOD-12: no downward-edit affordance) should use `text-disabled` color + a locked icon (lucide `Lock`, 14px) to signal read-only without using a disabled input that implies system-level unavailability.
 - The accent `#c0522a` is reserved. Phase 2–5 features should NOT introduce new accent colors. Semantic colors (success, warning, destructive) are already declared.
