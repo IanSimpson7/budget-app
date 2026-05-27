@@ -144,18 +144,75 @@ Every requirement below is consistent with C1–C3. Any future requirement that 
 
 ## Traceability
 
-Populated by `gsd-roadmapper` during roadmap creation. Empty initially.
+Populated by `gsd-roadmapper` 2026-05-27.
 
 | Requirement | Phase | Status |
 |---|---|---|
-| (all REQ-IDs) | TBD | Pending |
+| FOUND-01 | Phase 1 | Pending |
+| FOUND-02 | Phase 1 | Pending |
+| FOUND-03 | Phase 1 | Pending |
+| FOUND-04 | Phase 1 | Pending |
+| FOUND-05 | Phase 1 | Pending |
+| FOUND-06 | Phase 1 | Pending |
+| UI-05 | Phase 1 | Pending |
+| DEP-01 | Phase 1 | Pending |
+| DEP-02 | Phase 1 | Pending |
+| DEP-03 | Phase 1 | Pending |
+| INC-01 | Phase 2 | Pending |
+| INC-02 | Phase 2 | Pending |
+| INC-03 | Phase 2 | Pending |
+| INC-04 | Phase 2 | Pending |
+| INC-05 | Phase 2 | Pending |
+| INC-06 | Phase 2 | Pending |
+| INC-07 | Phase 2 | Pending |
+| INC-08 | Phase 2 | Pending |
+| UI-03 | Phase 2 | Pending |
+| EDGE-01 | Phase 2 | Pending |
+| EDGE-05 | Phase 2 | Pending |
+| EXP-01 | Phase 3 | Pending |
+| EXP-02 | Phase 3 | Pending |
+| EXP-03 | Phase 3 | Pending |
+| EXP-04 | Phase 3 | Pending |
+| EXP-05 | Phase 3 | Pending |
+| EXP-06 | Phase 3 | Pending |
+| EXP-07 | Phase 3 | Pending |
+| UI-04 | Phase 3 | Pending |
+| EDGE-06 | Phase 3 | Pending |
+| FOOD-01 | Phase 4 | Pending |
+| FOOD-02 | Phase 4 | Pending |
+| FOOD-03 | Phase 4 | Pending |
+| FOOD-04 | Phase 4 | Pending |
+| FOOD-05 | Phase 4 | Pending |
+| FOOD-06 | Phase 4 | Pending |
+| FOOD-07 | Phase 4 | Pending |
+| FOOD-08 | Phase 4 | Pending |
+| FOOD-09 | Phase 4 | Pending |
+| FOOD-10 | Phase 4 | Pending |
+| FOOD-11 | Phase 4 | Pending |
+| FOOD-12 | Phase 4 | Pending |
+| FOOD-13 | Phase 4 | Pending |
+| UI-02 | Phase 4 | Pending |
+| EDGE-02 | Phase 4 | Pending |
+| EDGE-03 | Phase 4 | Pending |
+| SURP-01 | Phase 5 | Pending |
+| SURP-02 | Phase 5 | Pending |
+| SURP-03 | Phase 5 | Pending |
+| SURP-04 | Phase 5 | Pending |
+| SURP-05 | Phase 5 | Pending |
+| SURP-06 | Phase 5 | Pending |
+| SURP-07 | Phase 5 | Pending |
+| SURP-08 | Phase 5 | Pending |
+| SURP-09 | Phase 5 | Pending |
+| UI-01 | Phase 5 | Pending |
+| UI-06 | Phase 5 | Pending |
+| EDGE-04 | Phase 5 | Pending |
 
 **Coverage:**
-- v1 requirements: 50 total (FOUND × 6, INC × 8, EXP × 7, FOOD × 13, SURP × 9, UI × 6, EDGE × 6, DEP × 3 — wait, recount below)
-- Mapped to phases: 0
-- Unmapped: 50 ⚠️ (resolved by roadmapper)
+- v1 requirements: **58 total** (FOUND=6 · INC=8 · EXP=7 · FOOD=13 · SURP=9 · UI=6 · EDGE=6 · DEP=3)
+- Mapped to phases: **58** ✓
+- Unmapped: **0**
 
-**Exact counts:** FOUND=6 · INC=8 · EXP=7 · FOOD=13 · SURP=9 · UI=6 · EDGE=6 · DEP=3 → **58 v1 requirements**
+**Per-phase totals:** P1=10 · P2=11 · P3=9 · P4=16 · P5=12 = 58 ✓
 
 ---
 
@@ -170,4 +227,4 @@ These are app inputs, not requirements per se — but the app must treat them as
 
 ---
 *Requirements defined: 2026-05-27*
-*Last updated: 2026-05-27 after initial definition*
+*Traceability populated: 2026-05-27 by gsd-roadmapper*
