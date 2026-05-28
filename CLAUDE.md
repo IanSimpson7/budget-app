@@ -46,8 +46,40 @@ Conventions not yet established. Will populate as patterns emerge during develop
 <!-- GSD:architecture-start source:ARCHITECTURE.md -->
 ## Architecture
 
-Architecture not yet mapped. Follow existing patterns found in the codebase.
+Architecture is mapped — see `## Architecture pointers (post-Phase-1)` below and `.planning/phases/01-foundation-storage-deploy/SKELETON.md` for the authoritative source.
 <!-- GSD:architecture-end -->
+
+## Stack (post-Phase-1)
+
+Pinned versions in production as of Phase 1 (foundation-storage-deploy):
+
+- **React 19.2.x** + react-dom 19.2.x
+- **Vite 8.0.12** (build tool; `base: '/budget-app/'` for Pages subpath)
+- **TypeScript ~5.6** (strict mode; `tsc -b` runs before `vite build`)
+- **Jotai 2.20.0** — atom-based state, colocated per domain, no central store
+- **Dexie 4.4.2** — IndexedDB wrapper behind the storage abstraction
+- **react-router-dom 7.x** — **HashRouter** (required for GitHub Pages subpath, no server rewrites)
+- **`tailwindcss` 3.4.x** — **PIN v3** (do NOT upgrade to v4; the config-file + token model this project depends on changed in v4)
+- **Vitest 4.1.6** + React Testing Library + `fake-indexeddb` + `structuredClone` polyfill (test env)
+- **lucide-react** — icons
+- **Deploy:** GitHub Pages via `actions/deploy-pages` (no `gh-pages` branch); workflow at `.github/workflows/deploy.yml`
+
+## Conventions (post-Phase-1)
+
+- **Colocated atoms:** `src/domains/<domain>/<domain>.atoms.ts`. No central store file.
+- **Single storage abstraction:** `src/storage/storage.ts` is the ONLY file domain code imports for persistence. Domain code never touches Dexie or IndexedDB directly.
+- **Migrations are pure functions** used by BOTH the Dexie upgrade callback AND the JSON import path — one source of truth for schema evolution.
+- **All UI tokens from `tailwind.config.ts`** — no inline hex anywhere in source.
+- **All interactive elements `min-h-[44px]`** — phone tap-target floor.
+- **All financial values rendered in `font-mono`.**
+- **no atomWithObservable** until Phase 2 (a React 19 interaction bug blocks it for now).
+- **No `localStorage` / `sessionStorage` anywhere in source** — persistence is IndexedDB via the storage abstraction only.
+
+## Architecture pointers (post-Phase-1)
+
+- **Architectural source of truth for Phases 2–5:** `.planning/phases/01-foundation-storage-deploy/SKELETON.md`.
+- **Phase 2** will introduce reactive `atomWithObservable + liveQuery` for the dashboard (lifts the Phase-1 ban once the React 19 path is validated).
+- **Phase 4** will introduce a `foodFloor` settings key guarded by the **C1 lock** (food floor never editable downward).
 
 <!-- GSD:skills-start source:skills/ -->
 ## Project Skills
