@@ -5,7 +5,6 @@
 import { describe, it, expect } from 'vitest'
 import { parseStatement } from './parseStatement'
 import { checkingAdapter } from './checkingAdapter'
-import type { CandidateRow } from '../income.types'
 
 // Gold fixture data — sourced from 02-CONTEXT.md figures.
 // Reconcile against Ian's real paste during UAT.
@@ -62,18 +61,24 @@ describe('parseStatement (plan 02-02)', () => {
       expect(r.isCredit).toBe(true)
     })
     // D-03: dates are ISO
-    expect(payrollRows[0].date).toBe('2026-05-01')
-    expect(payrollRows[0].netAmount).toBeCloseTo(1127.51, 2)
-    expect(payrollRows[1].date).toBe('2026-05-15')
-    expect(payrollRows[1].netAmount).toBeCloseTo(1296.59, 2)
+    const pr0 = payrollRows[0]
+    const pr1 = payrollRows[1]
+    expect(pr0).toBeDefined()
+    expect(pr1).toBeDefined()
+    expect(pr0!.date).toBe('2026-05-01')
+    expect(pr0!.netAmount).toBeCloseTo(1127.51, 2)
+    expect(pr1!.date).toBe('2026-05-15')
+    expect(pr1!.netAmount).toBeCloseTo(1296.59, 2)
   })
 
   it('VANGUARD SELL row is included in output (non-income credits are not filtered at parse time)', () => {
     const rows = parseStatement(GOLD_FIXTURE_TEXT, checkingAdapter)
     const vanguard = rows.find((r) => r.raw.includes('VANGUARD'))
     expect(vanguard).toBeDefined()
-    expect(vanguard!.isCredit).toBe(true) // positive amount → credit
-    expect(vanguard!.netAmount).toBeCloseTo(3000, 2)
+    if (vanguard) {
+      expect(vanguard.isCredit).toBe(true) // positive amount → credit
+      expect(vanguard.netAmount).toBeCloseTo(3000, 2)
+    }
   })
 
   it('all rows have a non-empty raw field containing the original line', () => {
@@ -112,11 +117,17 @@ describe('parseStatement (plan 02-02)', () => {
     const rows = parseStatement(GOLD_FIXTURE_TEXT, checkingAdapter)
     const cashback = rows.find((r) => r.raw.includes('Cashback'))
     expect(cashback).toBeDefined()
-    expect(cashback!.source).toBeTruthy()
+    if (cashback) {
+      expect(cashback.source).toBeTruthy()
+    }
   })
 
   it('balanceAfter is parsed correctly from trailing numbers', () => {
     const rows = parseStatement(GOLD_FIXTURE_TEXT, checkingAdapter)
-    expect(rows[0].balanceAfter).toBeCloseTo(3127.51, 2)
+    const first = rows[0]
+    expect(first).toBeDefined()
+    if (first) {
+      expect(first.balanceAfter).toBeCloseTo(3127.51, 2)
+    }
   })
 })
