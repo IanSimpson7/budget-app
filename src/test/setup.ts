@@ -11,6 +11,21 @@ import '@testing-library/jest-dom/vitest'
 import { afterEach } from 'vitest'
 import { cleanup } from '@testing-library/react'
 
+// jsdom's Blob / File do not implement .text() / .arrayBuffer(). Polyfill from
+// the constructor parts so storage.importAll(file) can read backups in tests.
+// Real browsers ship these natively; this shim only runs in the test env.
+if (typeof Blob !== 'undefined' && typeof Blob.prototype.text !== 'function') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(Blob.prototype as any).text = function (this: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = () => reject(reader.error)
+      reader.readAsText(this)
+    })
+  }
+}
+
 afterEach(() => {
   cleanup()
 })
