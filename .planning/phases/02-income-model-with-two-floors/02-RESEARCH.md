@@ -482,19 +482,21 @@ const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' 
 | A3 | The real checking statement is tab-delimited with the exact `TYPE:/CO:` metadata shape described in the discussion log | Pattern 3 | MEDIUM — the parser/adapter is tuned to this format; **planner should make "validate parser against the captured real sample" an explicit acceptance test**, since the full raw sample lives in 02-DISCUSSION-LOG.md and was only partially surfaced this session |
 | A4 | Ian already has a v1 IndexedDB on device, so the v1→v2 in-place upgrade path WILL execute (not just fresh installs) | Runtime State Inventory | LOW-MEDIUM — Phase 1 is live and phone-verified, so this is near-certain; test the upgrade path regardless |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Atom→storage seam for the `liveQuery` observable**
+> All three resolved during planning; recommendations are implemented in the Phase-2 plans (Q1 → `storage.observeIncomeChecks` seam in 02-01; Q2 → estimate-as-override in 02-05; Q3 → `surplusOverride?` field in 02-01/02-02).
+
+1. **RESOLVED: Atom→storage seam for the `liveQuery` observable**
    - What we know: project rule says domain code never imports `db.ts`; `liveQuery` needs the Dexie table.
    - What's unclear: whether to relax the rule for the one source atom, or add `storage.observeIncomeChecks()`.
    - Recommendation: Add `storage.observeIncomeChecks(): Observable<IncomeCheck[]>`. Preserves the structural boundary; trivial to write. **Recommend the planner make this a task.**
 
-2. **Where `estimatePerCheck` lives and how it auto-updates**
+2. **RESOLVED: Where `estimatePerCheck` lives and how it auto-updates**
    - What we know: UI-SPEC puts an "Estimate per check" field in Settings, defaulting to the most recent payroll check, overridable (D-11).
    - What's unclear: whether the stored setting auto-overwrites on each new payroll check, or stays manual once set.
    - Recommendation: Treat the stored setting as an OVERRIDE; when unset/zero, derive from the most recent payroll check (the `estimatePerCheckAtom` fallback). This avoids a write-on-every-commit side effect and keeps the value derived-by-default (FOUND-06 spirit).
 
-3. **Per-check surplus override storage**
+3. **RESOLVED: Per-check surplus override storage**
    - What we know: D-12 specifies a per-check manual override of the auto-surplus flag.
    - What's unclear: store as `surplusOverride?: boolean` on the check vs. compute purely from date-order.
    - Recommendation: Store an optional `surplusOverride` on the `IncomeCheck` (auto rule computes the default; the field only records a deliberate deviation). Pure date-order computation handles the common case; the field handles off-pattern months.
