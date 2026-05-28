@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 2 context gathered
-last_updated: "2026-05-28T10:51:52.364Z"
+status: executing
+stopped_at: Phase 2 UI-SPEC approved
+last_updated: "2026-05-28T15:39:22.057Z"
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 3
+  total_plans: 8
   completed_plans: 3
-  percent: 100
+  percent: 38
 ---
 
 # State: Budget App
@@ -36,9 +36,11 @@ progress:
 
 ## Current Position
 
+Phase: 02 (income-model-with-two-floors) — EXECUTING
+Plan: 1 of 5
 **Phase:** 1 — Foundation, Storage, Deploy — **COMPLETE**. Next: Phase 2 (Income Model with Two Floors) planning.
 **Plan:** 01-03 complete (GitHub Pages deploy + phone verification + docs). All Phase 1 plans done.
-**Status:** Phase 1 complete; ready to plan Phase 2
+**Status:** Executing Phase 02
 **Progress:** ██░░░░░░░░ 20% (3/3 Phase-1 plans, 1/5 phases)
 
 ---
@@ -129,9 +131,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-28T10:51:52.356Z
+**Last session:** 2026-05-28T11:30:35.008Z
 
-**Stopped at:** Phase 2 context gathered
+**Stopped at:** Phase 2 UI-SPEC approved
 
 **Next session action:** Plan Phase 2 (Income Model with Two Floors) — `/gsd-plan` or `/gsd-execute-phase` for Phase 2. Lifts the atomWithObservable ban; validate React 19 atomWithObservable+liveQuery path. NOTE the dated follow-up: bump Actions tags before 2026-06-02.
 
