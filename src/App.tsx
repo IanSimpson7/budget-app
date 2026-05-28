@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import AppShell from './components/AppShell'
 import SettingsPage from './pages/SettingsPage'
 import BackupPage from './pages/BackupPage'
+import EntryPage from './pages/EntryPage'
 
 // HashRouter per D-15 — GitHub Pages has no server-side SPA redirect at
 // subpaths, so #-routing is the correct default for the deploy target.
@@ -19,6 +20,7 @@ export default function App() {
             <Route path="/" element={<Navigate to="/settings" replace />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/backup" element={<BackupPage />} />
+            <Route path="/entry" element={<EntryPage />} />
             <Route path="*" element={<Navigate to="/settings" replace />} />
           </Routes>
         </Suspense>

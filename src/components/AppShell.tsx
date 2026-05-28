@@ -30,6 +30,9 @@ export default function AppShell({ children }: Props) {
           <NavLink to="/backup" className={navClasses}>
             Backup
           </NavLink>
+          <NavLink to="/entry" className={navClasses}>
+            Entry
+          </NavLink>
         </nav>
       </header>
       <main className="px-sp-4 sm:px-sp-6 py-sp-6 max-w-[960px] mx-auto">{children}</main>
