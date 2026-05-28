@@ -1,10 +1,11 @@
 ---
 phase: 2
 slug: income-model-with-two-floors
-status: ready
+status: validated
 nyquist_compliant: true
-wave_0_complete: false
+wave_0_complete: true
 created: 2026-05-28
+audited: 2026-05-28
 ---
 
 # Phase 2 — Validation Strategy
@@ -40,18 +41,18 @@ Targeted single-file runs (e.g. `npx vitest run src/domains/income/classify.test
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 02-01-01 | 01 | 1 | INC-02 | T-02-01 | v1 backup imports; version-too-new refused; migration widens nothing | integration | `npx vitest run src/test/migrations.test.ts` | ❌ W0 | ⬜ pending |
-| 02-01-02 | 01 | 1 | INC-01 | T-02-02 / T-02-03 | income round-trips export/import; storage surface has no credential/money-move method | integration | `npx vitest run src/test/storage.income.test.ts src/test/storage.test.ts` | ❌ W0 | ⬜ pending |
-| 02-01-03 | 01 | 1 | INC-01 | T-02-02 | gold fixture + absence proof present | unit | `npx vitest run src/test/storage.test.ts` | ❌ W0 | ⬜ pending |
-| 02-02-01 | 02 | 2 | INC-08 | T-02-D / T-02-V | parser splits gold fixture; bounded input; no eval/dynamic regex | unit | `npx vitest run src/domains/income/parser/parseStatement.test.ts` | ❌ W0 | ⬜ pending |
-| 02-02-02 | 02 | 2 | INC-04, EDGE-05 | T-02-05 | surplus = 3rd payroll by LOCAL month; conservative auto-check (D-05) | unit | `npx vitest run src/domains/income/classify.test.ts` | ❌ W0 | ⬜ pending |
-| 02-02-03 | 02 | 2 | INC-03, INC-06, EDGE-01 | T-02-04 / T-02-05 | projection D-11; backfill payroll-only; gift doesn't suppress; nothing persisted | unit | `npx vitest run src/domains/income/income.atoms.test.ts` | ❌ W0 | ⬜ pending |
-| 02-03-01 | 03 | 3 | INC-01, INC-07 | T-02-V / T-02-X | manual entry persists; validation gates save; no innerHTML | component | `npx vitest run src/domains/income/CheckEntryForm.test.tsx` | ❌ W0 | ⬜ pending |
-| 02-03-02 | 03 | 3 | UI-03 | T-02-06 | /entry route + tab shell; save via storage only | integration | `npx vitest run && npx tsc -b --noEmit` | ✅ (existing App smoke) | ⬜ pending |
-| 02-04-01 | 04 | 4 | INC-05 | T-02-04 | meter ARIA; token-only color; read-only | component | `npx vitest run src/components/IncomeBar.test.tsx` | ❌ W0 | ⬜ pending |
-| 02-04-02 | 04 | 4 | INC-06, EDGE-01 | T-02-05 | backfill alert replaces surplus card on payroll < defended | component | `npx vitest run && npx tsc -b --noEmit` | ❌ W0 | ⬜ pending |
-| 02-05-01 | 05 | 4 | INC-08, EDGE-05 | T-02-03 / T-02-X | commit only checked rows; gift/asset-sale excluded; remember sources; no innerHTML | integration | `npx vitest run src/domains/income/PasteParseFlow.test.tsx` | ❌ W0 | ⬜ pending |
-| 02-05-02 | 05 | 4 | UI-03 | T-02-06 | paste tab wired; estimate field persists via storage | integration | `npx vitest run && npx tsc -b --noEmit` | ✅ (existing settings test) | ⬜ pending |
+| 02-01-01 | 01 | 1 | INC-02 | T-02-01 | v1 backup imports; version-too-new refused; migration widens nothing | integration | `npx vitest run src/test/migrations.test.ts` | ✅ | ✅ green |
+| 02-01-02 | 01 | 1 | INC-01 | T-02-02 / T-02-03 | income round-trips export/import; storage surface has no credential/money-move method | integration | `npx vitest run src/test/storage.income.test.ts src/test/storage.test.ts` | ✅ | ✅ green |
+| 02-01-03 | 01 | 1 | INC-01 | T-02-02 | gold fixture + absence proof present | unit | `npx vitest run src/test/storage.test.ts` | ✅ | ✅ green |
+| 02-02-01 | 02 | 2 | INC-08 | T-02-D / T-02-V | parser splits gold fixture; bounded input; no eval/dynamic regex | unit | `npx vitest run src/domains/income/parser/parseStatement.test.ts` | ✅ | ✅ green |
+| 02-02-02 | 02 | 2 | INC-04, EDGE-05 | T-02-05 | surplus = 3rd payroll by LOCAL month; conservative auto-check (D-05) | unit | `npx vitest run src/domains/income/classify.test.ts` | ✅ | ✅ green |
+| 02-02-03 | 02 | 2 | INC-03, INC-06, EDGE-01 | T-02-04 / T-02-05 | projection D-11; backfill payroll-only; gift doesn't suppress; nothing persisted | unit | `npx vitest run src/domains/income/income.atoms.test.ts` | ✅ | ✅ green |
+| 02-03-01 | 03 | 3 | INC-01, INC-07 | T-02-V / T-02-X | manual entry persists; validation gates save; no innerHTML | component | `npx vitest run src/domains/income/CheckEntryForm.test.tsx` | ✅ | ✅ green |
+| 02-03-02 | 03 | 3 | UI-03 | T-02-06 | /entry route + tab shell; save via storage only | integration | `npx vitest run && npx tsc -b --noEmit` | ✅ (App smoke) | ✅ green |
+| 02-04-01 | 04 | 4 | INC-05 | T-02-04 | meter ARIA; token-only color; read-only; defended label from prop (CR-01 regression locked) | component | `npx vitest run src/components/IncomeBar.test.tsx` | ✅ | ✅ green |
+| 02-04-02 | 04 | 4 | INC-06, EDGE-01 | T-02-05 | backfill alert replaces surplus card on payroll < defended | component | `npx vitest run src/pages/DashboardPage.test.tsx` | ✅ | ✅ green |
+| 02-05-01 | 05 | 4 | INC-08, EDGE-05 | T-02-03 / T-02-X | commit only checked rows; gift/asset-sale excluded; remember sources; no innerHTML | integration | `npx vitest run src/domains/income/PasteParseFlow.test.tsx` | ✅ | ✅ green |
+| 02-05-02 | 05 | 4 | UI-03 | T-02-06 | paste tab wired; estimate field persists via storage | integration | `npx vitest run src/test/settings.atoms.test.ts` | ✅ | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -61,18 +62,18 @@ No 3 consecutive tasks lack an automated verify — every task above has an `<au
 
 ## Wave 0 Requirements
 
-Created in Plan 02-01 (Task 3) so plans 02-05 have concrete targets:
+Created in Plan 02-01 (Task 3) so plans 02-05 have concrete targets. **All Wave 0 files landed and are green (audit 2026-05-28).**
 
-- [ ] `src/domains/income/parser/__fixtures__/checking-may-2026.txt` — the gold statement sample (constructed from documented figures; **A3: reconcile against Ian's real paste at UAT**). Contains `GLI EAST LANSING`, `1,127.51`, `1,296.59`, `VANGUARD SELL`, `VENMO`, `TYPE: PAYROLL`.
-- [ ] `src/test/migrations.test.ts` — v1→v2 path + v1 backup import + version-too-new refusal (INC-02)
-- [ ] `src/test/storage.income.test.ts` — income CRUD + known-source/estimate persistence + export/import round-trip (INC-01)
-- [ ] extend `src/test/storage.test.ts` — absence proof adds `executeSweep`/`decreaseFoodFloor` (C2/C3)
-- [ ] `src/domains/income/parser/parseStatement.test.ts` — block split, field extraction, credit/debit (INC-08)
-- [ ] `src/domains/income/classify.test.ts` — surplus + LOCAL-month boundary + default taxable + conservative auto-check (INC-04, EDGE-05)
-- [ ] `src/domains/income/income.atoms.test.ts` — projection, backfill payroll-only, gift-doesn't-suppress (INC-06, D-09, D-11)
-- [ ] `src/domains/income/CheckEntryForm.test.tsx` — manual entry persists + validation + surplus badge (INC-01/INC-07)
-- [ ] `src/components/IncomeBar.test.tsx` — meter ARIA (INC-05)
-- [ ] `src/domains/income/PasteParseFlow.test.tsx` — paste→confirm→commit, only-checked-rows, gift excluded (INC-08, UI-03)
+- [x] `src/domains/income/parser/__fixtures__/checking-may-2026.txt` — the gold statement sample (constructed from documented figures; **A3: reconcile against Ian's real paste at UAT**). Contains `GLI EAST LANSING`, `1,127.51`, `1,296.59`, `VANGUARD SELL`, `VENMO`, `TYPE: PAYROLL`.
+- [x] `src/test/migrations.test.ts` — v1→v2 path + v1 backup import + version-too-new refusal (INC-02)
+- [x] `src/test/storage.income.test.ts` — income CRUD + known-source/estimate persistence + export/import round-trip (INC-01)
+- [x] extend `src/test/storage.test.ts` — absence proof adds `executeSweep`/`decreaseFoodFloor` (C2/C3)
+- [x] `src/domains/income/parser/parseStatement.test.ts` — block split, field extraction, credit/debit (INC-08)
+- [x] `src/domains/income/classify.test.ts` — surplus + LOCAL-month boundary + default taxable + conservative auto-check (INC-04, EDGE-05)
+- [x] `src/domains/income/income.atoms.test.ts` — projection, backfill payroll-only, gift-doesn't-suppress (INC-06, D-09, D-11)
+- [x] `src/domains/income/CheckEntryForm.test.tsx` — manual entry persists + validation + surplus badge (INC-01/INC-07)
+- [x] `src/components/IncomeBar.test.tsx` — meter ARIA (INC-05) + CR-01 regression (defended label derived from prop, not literal `$3k`)
+- [x] `src/domains/income/PasteParseFlow.test.tsx` — paste→confirm→commit, only-checked-rows, gift excluded (INC-08, UI-03)
 
 Framework install: none required — full toolchain present (package.json verified). Placeholder test files in 02-01 may use `it.todo` for behaviors landing in later plans; their subject plans replace todos with real assertions and turn them green.
 
@@ -97,4 +98,28 @@ Framework install: none required — full toolchain present (package.json verifi
 - [x] Feedback latency < ~8s (full) / ~3s (targeted)
 - [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** ready
+**Approval:** validated
+
+---
+
+## Validation Audit 2026-05-28
+
+Post-execution audit against the as-built codebase (this VALIDATION.md was authored pre-execution with all rows ⬜ pending / ❌ W0; updated here to reflect reality).
+
+| Metric | Count |
+|--------|-------|
+| Requirements in scope | 11 (INC-01..08, UI-03, EDGE-01, EDGE-05) |
+| COVERED | 11 |
+| PARTIAL | 0 |
+| MISSING | 0 |
+| Gaps found | 0 |
+| Resolved this audit | 0 (no auditor spawn needed) |
+| Escalated to manual-only | 3 (unchanged — device upgrade, real-paste reconcile, phone layout) |
+
+**Evidence:** `npx vitest run` → 13 files, **123 passed / 0 failed** (3.26s). `npx tsc -b --noEmit` → exit 0. All 12 Per-Task rows green; all 10 Wave 0 files present.
+
+**CR-01 closure confirmed:** the verifier (02-VERIFICATION.md) flagged that `IncomeBar.test.tsx` originally asserted the buggy literal `$3k`, locking the defect into a green suite. That is now fixed — `IncomeBar.test.tsx:70-81` renders with `defendedLine={2500}`, asserts `$2.5k` is present, and asserts `$3k` is absent (regression lock for the user-editable defended line). The remaining `$3k` assertion (line 58) correctly tests the $3,000 *default* case only.
+
+**Not validation gaps:** the WARNING cluster from 02-VERIFICATION.md / 02-REVIEW.md (WR-01..08, IN-01..04 — robustness/consistency nits) are tracked in review artifacts and do not represent missing requirement coverage.
+
+Phase 2 is **Nyquist-compliant**: every requirement has automated, green verification.
