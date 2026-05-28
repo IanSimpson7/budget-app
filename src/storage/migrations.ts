@@ -14,8 +14,25 @@
 // migrate FROM. importAll will refuse any source schemaVersion that doesn't have
 // a path to CURRENT_SCHEMA_VERSION (i.e. v1 only accepts schemaVersion === 1).
 
-import type { SchemaV1Data } from './schema'
+import type { KnownSource, SchemaV1Data } from './schema'
 
 export type MigrationFn = (data: SchemaV1Data) => SchemaV1Data
 
-export const MIGRATIONS: Record<number, MigrationFn> = {}
+// v1 → v2: seed settings.knownSources to [] when absent.
+// Income rows untouched — v1 had none (table existed but was always empty).
+// NO Dexie import — this is a pure data transform used by both the JSON import
+// ladder (storage.ts importAll) and Dexie's .upgrade() callback (db.ts).
+export function migrate_1_to_2(data: SchemaV1Data): SchemaV1Data {
+  return {
+    ...data,
+    settings: {
+      ...data.settings,
+      knownSources:
+        (data.settings.knownSources as KnownSource[] | undefined) ?? [],
+    },
+  }
+}
+
+export const MIGRATIONS: Record<number, MigrationFn> = {
+  1: migrate_1_to_2,
+}

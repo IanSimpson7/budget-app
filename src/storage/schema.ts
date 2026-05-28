@@ -3,7 +3,7 @@
 // in db.ts and (b) a corresponding MIGRATIONS[N-1] entry in migrations.ts. Single source
 // of truth via the migrations.ts comment block (D-09).
 
-export const CURRENT_SCHEMA_VERSION = 1 as const
+export const CURRENT_SCHEMA_VERSION = 2 as const
 
 export type Floors = Readonly<{
   passive: number // D-12 default 2400 — "Passive income floor — solvency baseline"
@@ -12,6 +12,28 @@ export type Floors = Readonly<{
 }>
 
 export const DEFAULT_FLOORS: Floors = { passive: 2400, defended: 3000, foodSeed: 550 }
+
+// D-08 income category classification
+export type Category = 'payroll' | 'gift' | 'other'
+
+// D-08 fields + D-12 surplusOverride. date is ISO yyyy-mm-dd, classified by LOCAL calendar month.
+export type IncomeCheck = Readonly<{
+  id?: number
+  date: string             // ISO yyyy-mm-dd
+  netAmount: number        // positive for income
+  source: string
+  note: string             // raw block text incl. balance (D-07)
+  category: Category       // D-08
+  taxable: boolean         // D-08
+  surplusOverride?: boolean // D-12 per-check manual surplus flag override
+}>
+
+// D-06 known-source memory: persisted source→category/taxable mapping
+export type KnownSource = Readonly<{
+  source: string
+  category: Category
+  taxable: boolean
+}>
 
 export type SettingsRow = { key: string; value: unknown }
 

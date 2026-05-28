@@ -1,10 +1,12 @@
 // Public storage abstraction. Domain code talks to this module ONLY — Dexie is
 // never imported outside src/storage/. The public surface is intentionally
-// minimal: getFloors, saveFloors, exportAll, importAll. Inviolable constraints
+// minimal: income CRUD, known-source/estimate settings, observeIncomeChecks,
+// getFloors, saveFloors, exportAll, importAll. Inviolable constraints
 // C1 / C2 / C3 are STRUCTURALLY enforced by the absence of any credential-
 // storage, money-movement, or floor-lowering method on this module's exports.
 // See src/test/storage.test.ts for the explicit absence proofs.
 
+import { liveQuery, type Observable } from 'dexie'
 import { db } from './db'
 import { MIGRATIONS } from './migrations'
 import {
@@ -13,10 +15,80 @@ import {
   ImportError,
   type ExportEnvelope,
   type Floors,
+  type IncomeCheck,
+  type KnownSource,
   type SchemaV1Data,
 } from './schema'
 
 const FLOORS_KEY = 'floors'
+const KNOWN_SOURCES_KEY = 'knownSources'
+const ESTIMATE_KEY = 'estimatePerCheck'
+
+// ── Income CRUD ────────────────────────────────────────────────────────────
+
+export async function addIncomeCheck(check: Omit<IncomeCheck, 'id'>): Promise<number> {
+  // Spread to avoid fake-indexeddb mutating the caller's object with the
+  // auto-generated id (Object.defineProperty on keyPath sets id on input).
+  return db.incomeChecks.add({ ...check } as IncomeCheck)
+}
+
+// Inserts checks sequentially. Each Dexie .add() call runs in its own
+// auto-committed transaction — this avoids the fake-indexeddb v6 ConstraintError
+// that bulkAdd triggers when the db has been delete/reopened multiple times
+// (a known fake-indexeddb issue with bulkAdd on auto-increment stores).
+// In production (real IDB), sequential adds are fast and correct.
+// Inserts checks sequentially. Spreading each check avoids fake-indexeddb
+// mutating the caller's object with the auto-generated id.
+export async function addIncomeChecks(checks: Omit<IncomeCheck, 'id'>[]): Promise<number[]> {
+  const ids: number[] = []
+  for (const check of checks) {
+    // eslint-disable-next-line no-await-in-loop
+    const id = await db.incomeChecks.add({ ...check } as IncomeCheck)
+    ids.push(id)
+  }
+  return ids
+}
+
+export async function listIncomeChecks(): Promise<IncomeCheck[]> {
+  return db.incomeChecks.toArray()
+}
+
+export async function updateIncomeCheck(id: number, patch: Partial<IncomeCheck>): Promise<void> {
+  await db.incomeChecks.update(id, patch)
+}
+
+export async function deleteIncomeCheck(id: number): Promise<void> {
+  await db.incomeChecks.delete(id)
+}
+
+// ── Known-source settings (D-06) ──────────────────────────────────────────
+
+export async function getKnownSources(): Promise<KnownSource[]> {
+  const row = await db.settings.get(KNOWN_SOURCES_KEY)
+  return (row?.value as KnownSource[] | undefined) ?? []
+}
+
+export async function saveKnownSources(list: KnownSource[]): Promise<void> {
+  await db.settings.put({ key: KNOWN_SOURCES_KEY, value: list })
+}
+
+// ── Estimate-per-check settings (D-11) ────────────────────────────────────
+
+export async function getEstimatePerCheck(): Promise<number> {
+  const row = await db.settings.get(ESTIMATE_KEY)
+  return (row?.value as number | undefined) ?? 0
+}
+
+export async function saveEstimatePerCheck(n: number): Promise<void> {
+  await db.settings.put({ key: ESTIMATE_KEY, value: n })
+}
+
+// ── Reactive observable (Pattern 1) ───────────────────────────────────────
+// Returns a Dexie Observable so atoms import storage, never db (Pitfall 5).
+
+export function observeIncomeChecks(): Observable<IncomeCheck[]> {
+  return liveQuery(() => db.incomeChecks.toArray() as Promise<IncomeCheck[]>)
+}
 
 export async function getFloors(): Promise<Floors> {
   const row = await db.settings.get(FLOORS_KEY)
@@ -39,8 +111,9 @@ async function collectSchemaV1Data(): Promise<SchemaV1Data> {
   if (settings[FLOORS_KEY] === undefined) {
     settings[FLOORS_KEY] = DEFAULT_FLOORS
   }
+  const incomeChecks = await db.incomeChecks.toArray()
   return {
-    incomeChecks: [],
+    incomeChecks,
     expenseItems: [],
     sinkingFunds: [],
     accounts: [],
@@ -148,7 +221,15 @@ async function replaceAll(data: SchemaV1Data): Promise<void> {
       for (const [key, value] of Object.entries(settings)) {
         await db.settings.put({ key, value })
       }
-      // incomeChecks / expenseItems / sinkingFunds / accounts are empty in v1.
+      // Re-seed income rows so a v2 backup round-trips income data.
+      if (Array.isArray(data.incomeChecks) && data.incomeChecks.length > 0) {
+        for (const check of data.incomeChecks as IncomeCheck[]) {
+          // Strip id so Dexie assigns a fresh auto-increment id on import.
+          const { id: _id, ...rest } = check
+          await db.incomeChecks.add(rest as IncomeCheck)
+        }
+      }
+      // expenseItems / sinkingFunds / accounts not yet populated (future phases).
     },
   )
 }

@@ -1,0 +1,30 @@
+# NOTE: This fixture is constructed from documented figures in 02-CONTEXT.md
+# "Specific Ideas" (lines 111-112). The verbatim raw paste was NOT available in
+# the planning docs (Assumption A3 in 02-RESEARCH.md). The format below (block-based,
+# tab-delimited, Memo lines indented under the parent transaction) reproduces the
+# structure described in 02-CONTEXT.md and 02-DISCUSSION-LOG.md. This fixture MUST
+# be reconciled against Ian's actual bank statement paste during UAT before the
+# parser is considered production-ready.
+
+Date	Description	Amount	Balance
+05/01/2026	GLI EAST LANSING	1,127.51	3,127.51
+	TYPE: PAYROLL
+	CO: GLI EAST LANSING
+	ID: 1234567890
+05/10/2026	ACH Deposit VANGUARD SELL	3,000.00	6,127.51
+	TYPE: CREDIT
+	CO: VANGUARD
+	ID: 9876543210
+05/12/2026	Cashback Redeemed from L30	223.97	6,351.48
+05/15/2026	GLI EAST LANSING	1,296.59	7,648.07
+	TYPE: PAYROLL
+	CO: GLI EAST LANSING
+	ID: 1234567891
+05/18/2026	ACH Deposit VENMO CASHOUT	600.00	8,248.07
+	TYPE: CREDIT
+	CO: VENMO
+	ID: 5555000001
+05/22/2026	ACH Deposit VENMO CASHOUT	350.00	8,598.07
+	TYPE: CREDIT
+	CO: VENMO
+	ID: 5555000002
