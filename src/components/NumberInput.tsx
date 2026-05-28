@@ -10,8 +10,8 @@ type Props = {
   label: string
   value: number
   onChange: (next: number) => void
-  helper?: string
-  error?: string
+  helper?: string | undefined
+  error?: string | undefined
 } & Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'value' | 'onChange'>
 
 export default function NumberInput({

@@ -1,9 +1,9 @@
 // Public storage abstraction. Domain code talks to this module ONLY — Dexie is
 // never imported outside src/storage/. The public surface is intentionally
 // minimal: getFloors, saveFloors, exportAll, importAll. Inviolable constraints
-// C1 / C2 / C3 are STRUCTURALLY enforced by the absence of forbidden methods —
-// no saveCredentials, setApiKey, storeBankToken, moveMoney, executeSweep,
-// decreaseFoodFloor. Those names simply do not exist on this surface.
+// C1 / C2 / C3 are STRUCTURALLY enforced by the absence of any credential-
+// storage, money-movement, or floor-lowering method on this module's exports.
+// See src/test/storage.test.ts for the explicit absence proofs.
 
 import { db } from './db'
 import { MIGRATIONS } from './migrations'

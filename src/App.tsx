@@ -1,8 +1,28 @@
+import { Suspense } from 'react'
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
+import AppShell from './components/AppShell'
+import SettingsPage from './pages/SettingsPage'
+import BackupPage from './pages/BackupPage'
+
+// HashRouter per D-15 — GitHub Pages has no server-side SPA redirect at
+// subpaths, so #-routing is the correct default for the deploy target.
+// Suspense fallback covers the Jotai async-atom load in SettingsPage.
+
 export default function App() {
   return (
-    <div className="p-sp-4 bg-surface text-text-primary min-h-screen">
-      <h1 className="font-display text-[28px] text-accent">Budget</h1>
-      <p className="font-sans text-sm">Phase 1 scaffold OK</p>
-    </div>
+    <HashRouter>
+      <AppShell>
+        <Suspense
+          fallback={<div className="font-sans text-sm text-text-secondary">Loading...</div>}
+        >
+          <Routes>
+            <Route path="/" element={<Navigate to="/settings" replace />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/backup" element={<BackupPage />} />
+            <Route path="*" element={<Navigate to="/settings" replace />} />
+          </Routes>
+        </Suspense>
+      </AppShell>
+    </HashRouter>
   )
 }
