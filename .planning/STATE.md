@@ -53,6 +53,14 @@ progress:
 
 ---
 
+## Quick Tasks Completed
+
+| Date | Task | Commit |
+|------|------|--------|
+| 2026-05-28 | dev server auto-opens in OS default browser (`server.open: true`) | `55fb07b` |
+
+---
+
 ## Accumulated Context
 
 ### Key Decisions (from PROJECT.md)
