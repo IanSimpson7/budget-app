@@ -6,6 +6,9 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   base: '/budget-app/',
   plugins: [react()],
+  server: {
+    open: true,
+  },
   define: {
     'import.meta.env.VITE_APP_VERSION': JSON.stringify(process.env.npm_package_version),
   },
