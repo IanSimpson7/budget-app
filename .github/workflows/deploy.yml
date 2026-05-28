@@ -1,0 +1,45 @@
+name: Deploy to GitHub Pages
+
+# Push to main builds and deploys the Vite bundle to GitHub Pages via the
+# official actions/deploy-pages artifact flow. No gh-pages branch is used.
+# Repo Settings -> Pages -> Source MUST be set to "GitHub Actions".
+# workflow_dispatch lets Ian re-run a deploy from the Actions tab without a commit.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+# GITHUB_TOKEN permissions for the Pages deploy. This is CI infrastructure auth
+# (built-in token), NOT application credentials — C2 (no app credentials) holds.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Latest push always wins; an in-progress deploy is cancelled.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run test -- --run
+      - run: npm run build
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+      - id: deployment
+        uses: actions/deploy-pages@v4
