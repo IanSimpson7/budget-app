@@ -60,7 +60,7 @@ Every phase's plans must structurally enforce these — not merely document them
   6. Both floor values are editable in a settings/parameters surface
 **Plans:** 5 plans
 - [x] 02-01-PLAN.md — Schema v1→v2 migration + income CRUD/known-source storage + db-free reactive observable + Wave 0 scaffolds
-- [ ] 02-02-PLAN.md — Pure statement parser + checking adapter + classification + reactive income atom chain (gold fixture gate)
+- [x] 02-02-PLAN.md — Pure statement parser + checking adapter + classification + reactive income atom chain (gold fixture gate)
 - [ ] 02-03-PLAN.md — Manual entry vertical slice: CheckEntryForm + EntryTabBar + /entry route
 - [ ] 02-04-PLAN.md — Dashboard vertical slice: IncomeBar + metric cards + backfill alert + /dashboard index route
 - [ ] 02-05-PLAN.md — Paste-parse vertical slice: PasteParseFlow + ConfirmTable + remember-sources + Settings estimate field
