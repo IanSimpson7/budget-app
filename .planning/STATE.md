@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-28T00:48:38.818Z"
+last_updated: "2026-05-28T02:10:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 3
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 7
 ---
 
 # State: Budget App
@@ -36,9 +36,9 @@ progress:
 ## Current Position
 
 **Phase:** 1 — Foundation, Storage, Deploy
-**Plan:** None yet (awaiting `/gsd-plan-phase 1`)
-**Status:** Ready to execute
-**Progress:** ░░░░░░░░░░ 0% (0/5 phases)
+**Plan:** 01-01 complete; next is 01-02 (Dexie + storage abstraction + Settings/Backup pages)
+**Status:** Executing
+**Progress:** █░░░░░░░░░ 7% (1/3 Phase-1 plans, 0/5 phases)
 
 ---
 
@@ -67,8 +67,16 @@ progress:
 
 ### Open Loops
 
-- **LEVERAGE-PAUSE-1**: State/data-model architecture decision must be surfaced for Ian's sign-off during Phase 1 plan-check before deep implementation (per spec calibration §)
+- **LEVERAGE-PAUSE-1**: RESOLVED in CONTEXT.md (Jotai + Dexie + storage abstraction, D-01..D-11)
 - **PLAN-FORMAT-CONFIRM**: Confirm real `plans/<date>.md` format against a live sample in `../schedule-meal-coordinator/plans/` BEFORE Phase 4 parser implementation (per spec §5g)
+
+### Key Decisions (added 01-01)
+
+- Pinned tailwindcss ^3.4.17 (NOT v4) — UI-SPEC tailwind.config.ts is v3 syntax (Pitfall 2 locked)
+- Hardcoded vite base '/budget-app/' (D-18 / RESEARCH Open Question 3)
+- structuredClone polyfill placed BEFORE fake-indexeddb/auto import in src/test/setup.ts (Pitfall 4 locked)
+- @testing-library/jest-dom pinned ^6.9.1 (RESEARCH cited a non-existent 29.x version)
+- tsconfig project-references composite dropped; per-file emit policy left to Vite's loader
 
 ### Deferred (v1 → v2)
 
@@ -92,9 +100,11 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-27T23:21:03.897Z
+**Last session:** 2026-05-28T02:10:00.000Z
 
-**Next session action:** `/gsd-plan-phase 1` — Decompose Phase 1 (Foundation, Storage, Deploy) into executable plans. Surface state/data-model architecture decision as leverage-pause checkpoint.
+**Stopped at:** Completed 01-01-PLAN.md (scaffold + Wave 0 test infra). Working tree clean. `npm run build` + `npm test -- --run` + `npm run typecheck` all green inside `projects/budget-app/.git`. Commits: `db362a5` (scaffold) and `d4f19f9` (Wave 0 tests).
+
+**Next session action:** Execute `01-02-PLAN.md` — Walking-skeleton vertical slice: Dexie db + storage abstraction (getFloors/saveFloors/exportAll/importAll) + Jotai settings atoms + Settings/Backup pages with HashRouter.
 
 ---
 

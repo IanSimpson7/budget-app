@@ -22,7 +22,7 @@ Every requirement below is consistent with C1–C3. Any future requirement that 
 
 ### Foundation
 
-- [ ] **FOUND-01**: App is a Vite + React + TypeScript web app with component structure and responsive layout (not a single-file artifact)
+- [x] **FOUND-01**: App is a Vite + React + TypeScript web app with component structure and responsive layout (not a single-file artifact) — satisfied by 01-01
 - [ ] **FOUND-02**: All financial data persists locally via IndexedDB behind a storage abstraction (no `localStorage`-coupling in domain code)
 - [ ] **FOUND-03**: User can export all data as JSON via an "Export backup" action
 - [ ] **FOUND-04**: User can import a previously-exported JSON file to restore state
@@ -148,7 +148,7 @@ Populated by `gsd-roadmapper` 2026-05-27.
 
 | Requirement | Phase | Status |
 |---|---|---|
-| FOUND-01 | Phase 1 | Pending |
+| FOUND-01 | Phase 1 | Complete (01-01) |
 | FOUND-02 | Phase 1 | Pending |
 | FOUND-03 | Phase 1 | Pending |
 | FOUND-04 | Phase 1 | Pending |
