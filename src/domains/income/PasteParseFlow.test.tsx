@@ -6,6 +6,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Provider } from 'jotai'
 import { createStore } from 'jotai'
+import { MemoryRouter } from 'react-router-dom'
 import PasteParseFlow from './PasteParseFlow'
 import type { KnownSource } from './income.types'
 
@@ -92,13 +93,15 @@ vi.mock('./income.atoms', async (importOriginal) => {
   }
 })
 
-// Helper to render with a fresh Jotai store
+// Helper to render with a fresh Jotai store + Router context (useNavigate in PasteParseFlow)
 function renderFlow() {
   const store = createStore()
   return render(
-    <Provider store={store}>
-      <PasteParseFlow />
-    </Provider>,
+    <MemoryRouter>
+      <Provider store={store}>
+        <PasteParseFlow />
+      </Provider>
+    </MemoryRouter>,
   )
 }
 
@@ -136,9 +139,12 @@ describe('PasteParseFlow', () => {
       expect(screen.getByText(/2 of 6 entries selected/i)).toBeInTheDocument()
     })
 
-    // Exactly 2 checkboxes should be checked by default (the two GLI EAST LANSING PAYROLL rows)
-    const checkboxes = screen.getAllByRole('checkbox')
-    const checkedCount = checkboxes.filter((cb) => (cb as HTMLInputElement).checked).length
+    // Exactly 2 row-select checkboxes should be checked by default (the two GLI EAST LANSING PAYROLL rows)
+    // Use aria-label "Select row N" to distinguish from the per-row "Taxable" checkboxes
+    const rowCheckboxes = Array.from({ length: 6 }, (_, i) =>
+      screen.getByRole('checkbox', { name: new RegExp(`select row ${i + 1}`, 'i') }),
+    )
+    const checkedCount = rowCheckboxes.filter((cb) => (cb as HTMLInputElement).checked).length
     expect(checkedCount).toBe(2)
   })
 
@@ -156,9 +162,11 @@ describe('PasteParseFlow', () => {
       expect(screen.getByText(/2 of 6 entries selected/i)).toBeInTheDocument()
     })
 
-    // Only 2 rows checked — VANGUARD and VENMO are unchecked
-    const checkboxes = screen.getAllByRole('checkbox')
-    const checkedBoxes = checkboxes.filter((cb) => (cb as HTMLInputElement).checked)
+    // Only 2 row-select checkboxes checked — VANGUARD and VENMO are unchecked
+    const rowCheckboxes = Array.from({ length: 6 }, (_, i) =>
+      screen.getByRole('checkbox', { name: new RegExp(`select row ${i + 1}`, 'i') }),
+    )
+    const checkedBoxes = rowCheckboxes.filter((cb) => (cb as HTMLInputElement).checked)
     expect(checkedBoxes).toHaveLength(2)
   })
 

@@ -145,3 +145,52 @@ export const saveIncomeCheckAtom = atom(
     await storage.addIncomeCheck(check)
   },
 )
+
+// ── Commit checked rows + remember sources (paste-parse flow) ─────────────────
+// Write-only. Receives the full rows array; filters to checked rows only.
+// Persists via storage.addIncomeChecks + storage.saveKnownSources.
+// NO refreshCounterAtom — liveQuery re-emits on IDB write automatically.
+// D-07: note ← raw block text (already on CandidateRow); balance preserved.
+// T-02-06: only storage.addIncomeChecks + saveKnownSources are called — no
+//   credential, money-move, or floor-lowering method (Tampering mitigation).
+export const commitCheckedRowsAtom = atom(
+  null,
+  async (
+    _get,
+    _set,
+    rows: import('./income.types').CandidateRow[],
+  ): Promise<void> => {
+    const checked = rows.filter((r) => r.checked)
+    // Map CandidateRow → Omit<IncomeCheck, 'id'> (D-07: note = raw block text)
+    const toSave: Omit<import('./income.types').IncomeCheck, 'id'>[] = checked.map((r) => ({
+      date: r.date ?? new Date().toISOString().slice(0, 10),
+      netAmount: r.netAmount ?? 0,
+      source: r.source ?? '',
+      note: r.note ?? r.raw,
+      category: r.category,
+      taxable: r.taxable,
+    }))
+    await storage.addIncomeChecks(toSave)
+
+    // D-06: remember each checked row's (source, category, taxable) into knownSources
+    // Dedup by source — existing entries are overwritten with the committed values.
+    const existing = await storage.getKnownSources()
+    const merged = [...existing]
+    for (const row of checked) {
+      const src = row.source ?? ''
+      if (!src) continue
+      const idx = merged.findIndex((ks) => ks.source === src)
+      const entry: import('./income.types').KnownSource = {
+        source: src,
+        category: row.category,
+        taxable: row.taxable,
+      }
+      if (idx >= 0) {
+        merged[idx] = entry
+      } else {
+        merged.push(entry)
+      }
+    }
+    await storage.saveKnownSources(merged)
+  },
+)
