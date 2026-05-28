@@ -5,7 +5,8 @@
 //   • Actual fill (success): width = (mtdTotal / projectedMonth) × 100%
 //   • Projected ghost (warning/40%): from fill edge to 100% when projected > mtd
 //   • Passive floor marker: dashed text-secondary vertical line, labeled "floor"
-//   • Defended-line tick: 2px solid accent vertical line, labeled "$3k"
+//   • Defended-line tick: 2px solid accent vertical line, labeled with the
+//     configurable defended-line value (compact currency, e.g. "$3k", "$2.5k")
 //
 // ARIA: role="meter" aria-valuenow={mtdTotal} aria-valuemin="0" aria-valuemax={projectedMonth}
 //        aria-label="Month-to-date income"
@@ -19,10 +20,19 @@ type Props = {
 }
 
 const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
+const compactCurrency = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  notation: 'compact',
+  maximumFractionDigits: 1,
+})
 
 export default function IncomeBar({ mtdTotal, projectedMonth, passiveFloor, defendedLine }: Props) {
   // When projected is 0 (empty month), all widths collapse to 0 gracefully.
   const base = projectedMonth > 0 ? projectedMonth : 1
+
+  // Label the defended-line tick from the prop — lowercase to keep the "$3k" aesthetic.
+  const defendedLabel = compactCurrency.format(defendedLine).toLowerCase()
 
   const fillPct = Math.min(100, (mtdTotal / base) * 100)
   const ghostPct = projectedMonth > mtdTotal ? 100 - fillPct : 0
@@ -97,7 +107,7 @@ export default function IncomeBar({ mtdTotal, projectedMonth, passiveFloor, defe
             className="absolute -translate-x-1/2 font-sans text-xs text-accent"
             style={{ left: `${Math.min(defendedPct, 99.5)}%` }}
           >
-            $3k
+            {defendedLabel}
           </span>
         )}
       </div>

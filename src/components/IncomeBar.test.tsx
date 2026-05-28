@@ -55,7 +55,7 @@ describe('IncomeBar', () => {
     expect(screen.getByText('floor')).toBeDefined()
   })
 
-  it('renders defended line label "$3k"', () => {
+  it('renders defended line label "$3k" for the default $3,000 defended line', () => {
     render(
       <IncomeBar
         mtdTotal={1500}
@@ -65,6 +65,19 @@ describe('IncomeBar', () => {
       />,
     )
     expect(screen.getByText('$3k')).toBeDefined()
+  })
+
+  it('derives the defended line label from the prop (not a hardcoded $3k) — CR-01 regression', () => {
+    render(
+      <IncomeBar
+        mtdTotal={1500}
+        projectedMonth={2500}
+        passiveFloor={2000}
+        defendedLine={2500}
+      />,
+    )
+    expect(screen.getByText('$2.5k')).toBeDefined()
+    expect(screen.queryByText('$3k')).toBeNull()
   })
 
   it('renders empty state at 0 fill when mtdTotal is 0', () => {

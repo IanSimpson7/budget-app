@@ -10,9 +10,16 @@ const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: '
 
 type Props = {
   projectedPayroll: number
+  defendedLine: number
 }
 
-export default function BackfillAlertCard({ projectedPayroll }: Props) {
+const wholeCurrency = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  maximumFractionDigits: 0,
+})
+
+export default function BackfillAlertCard({ projectedPayroll, defendedLine }: Props) {
   return (
     <div
       role="alert"
@@ -23,7 +30,7 @@ export default function BackfillAlertCard({ projectedPayroll }: Props) {
         {currency.format(projectedPayroll)}
       </span>
       <span className="font-sans text-xs text-text-secondary">
-        below $3,000 — add sessions to defend
+        below {wholeCurrency.format(defendedLine)} — add sessions to defend
       </span>
     </div>
   )

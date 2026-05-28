@@ -74,7 +74,7 @@ export default function DashboardPage() {
 
         {/* Surplus OR BackfillAlertCard — in-place swap (pre-mirrors Phase-5 SURP-07) */}
         {backfillActive ? (
-          <BackfillAlertCard projectedPayroll={projectedPayroll} />
+          <BackfillAlertCard projectedPayroll={projectedPayroll} defendedLine={floors.defended} />
         ) : (
           <MetricCard
             label="Surplus"
