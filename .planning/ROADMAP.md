@@ -58,7 +58,12 @@ Every phase's plans must structurally enforce these — not merely document them
   4. When projected month total falls below $3,000, a backfill alert surfaces ("projected $X, below $3,000 — add sessions to defend")
   5. A 3rd check in the same calendar month is automatically classified as surplus, not absorbed into the monthly baseline
   6. Both floor values are editable in a settings/parameters surface
-**Plans:** TBD
+**Plans:** 5 plans
+- [ ] 02-01-PLAN.md — Schema v1→v2 migration + income CRUD/known-source storage + db-free reactive observable + Wave 0 scaffolds
+- [ ] 02-02-PLAN.md — Pure statement parser + checking adapter + classification + reactive income atom chain (gold fixture gate)
+- [ ] 02-03-PLAN.md — Manual entry vertical slice: CheckEntryForm + EntryTabBar + /entry route
+- [ ] 02-04-PLAN.md — Dashboard vertical slice: IncomeBar + metric cards + backfill alert + /dashboard index route
+- [ ] 02-05-PLAN.md — Paste-parse vertical slice: PasteParseFlow + ConfirmTable + remember-sources + Settings estimate field
 **UI hint:** yes
 
 ### Phase 3: Expense Model + Sinking Funds
@@ -116,7 +121,7 @@ Every phase's plans must structurally enforce these — not merely document them
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation, Storage, Deploy | 3/3 | Complete | 2026-05-28 |
-| 2. Income Model with Two Floors | 0/? | Not started | - |
+| 2. Income Model with Two Floors | 0/5 | Planned | - |
 | 3. Expense Model + Sinking Funds | 0/? | Not started | - |
 | 4. Food Contract (Locked Floor) | 0/? | Not started | - |
 | 5. Surplus Router + Unified Dashboard | 0/? | Not started | - |
