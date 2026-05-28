@@ -126,3 +126,22 @@ export const backfillActiveAtom = atom(async (get): Promise<boolean> => {
   const defended = await get(defendedLineAtom)
   return projectedPayroll < defended
 })
+
+// ── Known sources (D-06) ───────────────────────────────────────────────────────
+// Plain async atom — autocomplete tolerates initial empty array.
+// Reads storage.getKnownSources(); re-fetches on every mount (no liveQuery needed
+// for known-source list — it updates on manual-entry save, not in real-time).
+export const knownSourcesAtom = atom(async (): Promise<import('./income.types').KnownSource[]> =>
+  storage.getKnownSources(),
+)
+
+// ── Save write-atom (manual entry form) ───────────────────────────────────────
+// Write-only. Persists via storage.addIncomeCheck ONLY.
+// NO refreshCounterAtom bump — liveQuery source atom (incomeChecksAtom) re-emits
+// automatically on IDB write (PATTERNS lines 370-372 prohibition on manual counter).
+export const saveIncomeCheckAtom = atom(
+  null,
+  async (_get, _set, check: Omit<import('./income.types').IncomeCheck, 'id'>): Promise<void> => {
+    await storage.addIncomeCheck(check)
+  },
+)
