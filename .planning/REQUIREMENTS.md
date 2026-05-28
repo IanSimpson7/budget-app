@@ -23,11 +23,11 @@ Every requirement below is consistent with C1–C3. Any future requirement that 
 ### Foundation
 
 - [x] **FOUND-01**: App is a Vite + React + TypeScript web app with component structure and responsive layout (not a single-file artifact) — satisfied by 01-01
-- [ ] **FOUND-02**: All financial data persists locally via IndexedDB behind a storage abstraction (no `localStorage`-coupling in domain code)
-- [ ] **FOUND-03**: User can export all data as JSON via an "Export backup" action
-- [ ] **FOUND-04**: User can import a previously-exported JSON file to restore state
-- [ ] **FOUND-05**: All floors and targets (passive floor, defended line, food floor, EF targets) are stored as editable parameters, never hard-coded constants
-- [ ] **FOUND-06**: Derived values (survival floor, EF 3-mo target, EF 6-mo target, monthly surplus) recompute on input change — never stored as stale copies
+- [x] **FOUND-02**: All financial data persists locally via IndexedDB behind a storage abstraction (no `localStorage`-coupling in domain code) — satisfied by 01-02
+- [x] **FOUND-03**: User can export all data as JSON via an "Export backup" action — satisfied by 01-02
+- [x] **FOUND-04**: User can import a previously-exported JSON file to restore state — satisfied by 01-02
+- [x] **FOUND-05**: All floors and targets (passive floor, defended line, food floor, EF targets) are stored as editable parameters, never hard-coded constants — satisfied by 01-02 (passive/defended/foodSeed only; remaining EF targets land in later phases)
+- [x] **FOUND-06**: Derived values (survival floor, EF 3-mo target, EF 6-mo target, monthly surplus) recompute on input change — never stored as stale copies — pattern proven by 01-02 (derivedSurvivalFloorAtom); remaining derivations land in later phases
 
 ### Income Model
 
@@ -84,7 +84,7 @@ Every requirement below is consistent with C1–C3. Any future requirement that 
 - [ ] **UI-02**: Food panel renders the protected floor (locked, visibly non-editable downward) and the gateable discretionary food layer side by side
 - [ ] **UI-03**: Entry surface supports typed entry and paste-parse with a confirm step before commit
 - [ ] **UI-04**: Funds surface shows EF progress (current → 3-mo → 6-mo) and all sinking-fund instances with progress toward payout dates
-- [ ] **UI-05**: Backup surface exposes JSON export and import actions
+- [x] **UI-05**: Backup surface exposes JSON export and import actions — satisfied by 01-02
 - [ ] **UI-06**: UI is responsive — phone view of dashboard is readable (entry is laptop-primary, but viewing state on phone works)
 
 ### Edge Cases (cross-cutting)

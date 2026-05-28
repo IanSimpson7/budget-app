@@ -41,7 +41,7 @@ Every phase's plans must structurally enforce these — not merely document them
   5. Every push to `main` auto-deploys to GitHub Pages via GitHub Actions
 **Plans:** 3 plans
 - [x] 01-01-PLAN.md — Scaffold Vite+React+TS, pin Tailwind v3, Wave 0 test stubs (commits: db362a5, d4f19f9; SUMMARY: 01-01-SUMMARY.md)
-- [ ] 01-02-PLAN.md — Walking skeleton vertical slice: Dexie + storage abstraction + settings atoms + Settings/Backup pages with HashRouter
+- [x] 01-02-PLAN.md — Walking skeleton vertical slice: Dexie + storage abstraction + settings atoms + Settings/Backup pages with HashRouter (commits: b91d051, 6f6ff23, a0a75a7, 426cfc6, fd5ca96, 9efd70a; SUMMARY: 01-02-SUMMARY.md)
 - [ ] 01-03-PLAN.md — GitHub Actions deploy + phone verification + CLAUDE.md/README.md update
 **Leverage-pause:** state/data-model architecture decision — surface for Ian's sign-off before deep implementation (per spec §calibration)
 **UI hint:** yes

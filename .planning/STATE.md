@@ -8,8 +8,8 @@ progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
-  percent: 7
+  completed_plans: 2
+  percent: 13
 ---
 
 # State: Budget App
@@ -36,9 +36,9 @@ progress:
 ## Current Position
 
 **Phase:** 1 — Foundation, Storage, Deploy
-**Plan:** 01-01 complete; next is 01-02 (Dexie + storage abstraction + Settings/Backup pages)
+**Plan:** 01-02 complete; next is 01-03 (GitHub Actions deploy + phone verification)
 **Status:** Executing
-**Progress:** █░░░░░░░░░ 7% (1/3 Phase-1 plans, 0/5 phases)
+**Progress:** ██░░░░░░░░ 13% (2/3 Phase-1 plans, 0/5 phases)
 
 ---
 
@@ -78,6 +78,15 @@ progress:
 - @testing-library/jest-dom pinned ^6.9.1 (RESEARCH cited a non-existent 29.x version)
 - tsconfig project-references composite dropped; per-file emit policy left to Vite's loader
 
+### Key Decisions (added 01-02)
+
+- Phase 1 uses PLAIN async Jotai atoms + refresh-counter for invalidation, NOT atomWithObservable (RESEARCH Pitfall 1 lockout); liveQuery reserved for Phase 2 dashboard.
+- exportAll() seeds DEFAULT_FLOORS into the envelope when no settings row has been saved, so a round-trip into a fresh DB reproduces UI state.
+- importAll refuses any source schemaVersion with no migration path (empty v1 MIGRATIONS map ⇒ only schemaVersion === 1 accepted).
+- ImportError code → toast copy map lives in BackupPage.tsx, NOT in storage.ts — storage layer stays UI-agnostic.
+- jsdom Blob.prototype.text() polyfill added to test/setup.ts via FileReader (required for storage.importAll under Vitest).
+- T-01-08 boundary recorded for Phase 4: `floors.foodSeed` is user-editable both directions in Phase 1; the C1 lock applies to the future `settings['foodFloor']` singleton specifically, not to the seed.
+
 ### Deferred (v1 → v2)
 
 - OCR-01, OCR-02 (screenshot OCR ingestion + itemized receipt parser) — architect storage seam in v1, defer implementation
@@ -100,12 +109,12 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-28T02:10:00.000Z
+**Last session:** 2026-05-28T02:15:00.000Z
 
-**Stopped at:** Completed 01-01-PLAN.md (scaffold + Wave 0 test infra). Working tree clean. `npm run build` + `npm test -- --run` + `npm run typecheck` all green inside `projects/budget-app/.git`. Commits: `db362a5` (scaffold) and `d4f19f9` (Wave 0 tests).
+**Stopped at:** Completed 01-02-PLAN.md (walking-skeleton vertical slice). Working tree clean. `npm run build`, `npm test -- --run` (23/23 passing, 0 todo), `npm run typecheck` all green. Commits this plan: `b91d051` (RED storage), `6f6ff23` (GREEN storage), `a0a75a7` (RED atoms), `426cfc6` (GREEN atoms + components), `fd5ca96` (RED BackupPage), `9efd70a` (GREEN pages + App).
 
-**Next session action:** Execute `01-02-PLAN.md` — Walking-skeleton vertical slice: Dexie db + storage abstraction (getFloors/saveFloors/exportAll/importAll) + Jotai settings atoms + Settings/Backup pages with HashRouter.
+**Next session action:** Execute `01-03-PLAN.md` — GitHub Actions deploy + phone-browser verification + CLAUDE.md/README.md update. Phase 1 ships when the live URL is reachable.
 
 ---
 
-*Last updated: 2026-05-27*
+*Last updated: 2026-05-28*
