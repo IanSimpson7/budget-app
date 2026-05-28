@@ -11,9 +11,9 @@
 type Props = {
   label: string
   value: string
-  subtext?: string
-  variant?: 'default' | 'alert'
-  valueColor?: string
+  subtext?: string | undefined
+  variant?: 'default' | 'alert' | undefined
+  valueColor?: string | undefined
 }
 
 const cardBase =

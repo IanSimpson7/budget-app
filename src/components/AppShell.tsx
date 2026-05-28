@@ -24,14 +24,17 @@ export default function AppShell({ children }: Props) {
       <header className="bg-surface border-b border-surface-border px-sp-4 sm:px-sp-6 py-sp-3">
         <h1 className="font-display text-[28px] leading-[1.15] text-text-primary">Budget</h1>
         <nav className="flex gap-sp-6 mt-sp-2" aria-label="Primary">
+          <NavLink to="/dashboard" className={navClasses}>
+            Dashboard
+          </NavLink>
+          <NavLink to="/entry" className={navClasses}>
+            Entry
+          </NavLink>
           <NavLink to="/settings" className={navClasses}>
             Settings
           </NavLink>
           <NavLink to="/backup" className={navClasses}>
             Backup
-          </NavLink>
-          <NavLink to="/entry" className={navClasses}>
-            Entry
           </NavLink>
         </nav>
       </header>

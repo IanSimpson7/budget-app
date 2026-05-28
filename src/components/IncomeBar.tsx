@@ -39,7 +39,7 @@ export default function IncomeBar({ mtdTotal, projectedMonth, passiveFloor, defe
       <div
         role="meter"
         aria-valuenow={mtdTotal}
-        aria-valuemin="0"
+        aria-valuemin={0}
         aria-valuemax={projectedMonth}
         aria-label="Month-to-date income"
         className="relative h-[28px] w-full rounded-sm border border-surface-border bg-surface-raised overflow-hidden"
