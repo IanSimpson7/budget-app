@@ -39,7 +39,10 @@ Every phase's plans must structurally enforce these — not merely document them
   3. Ian can click "Export backup" and receive a JSON file containing all stored state
   4. Ian can import a previously-exported JSON file and see his prior state restored
   5. Every push to `main` auto-deploys to GitHub Pages via GitHub Actions
-**Plans:** TBD
+**Plans:** 3 plans
+- [ ] 01-01-PLAN.md — Scaffold Vite+React+TS, pin Tailwind v3, Wave 0 test stubs
+- [ ] 01-02-PLAN.md — Walking skeleton vertical slice: Dexie + storage abstraction + settings atoms + Settings/Backup pages with HashRouter
+- [ ] 01-03-PLAN.md — GitHub Actions deploy + phone verification + CLAUDE.md/README.md update
 **Leverage-pause:** state/data-model architecture decision — surface for Ian's sign-off before deep implementation (per spec §calibration)
 **UI hint:** yes
 
@@ -112,7 +115,7 @@ Every phase's plans must structurally enforce these — not merely document them
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation, Storage, Deploy | 0/? | Not started | - |
+| 1. Foundation, Storage, Deploy | 0/3 | Planned | - |
 | 2. Income Model with Two Floors | 0/? | Not started | - |
 | 3. Expense Model + Sinking Funds | 0/? | Not started | - |
 | 4. Food Contract (Locked Floor) | 0/? | Not started | - |
@@ -138,4 +141,4 @@ Per-phase totals: P1=10, P2=11, P3=9, P4=16, P5=12 → 58 ✓
 
 ---
 
-*Last updated: 2026-05-27*
+*Last updated: 2026-05-28 (Phase 1 planning complete)*
