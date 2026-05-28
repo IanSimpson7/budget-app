@@ -63,7 +63,7 @@ Every phase's plans must structurally enforce these — not merely document them
 - [x] 02-02-PLAN.md — Pure statement parser + checking adapter + classification + reactive income atom chain (gold fixture gate)
 - [x] 02-03-PLAN.md — Manual entry vertical slice: CheckEntryForm + EntryTabBar + /entry route
 - [x] 02-04-PLAN.md — Dashboard vertical slice: IncomeBar + metric cards + backfill alert + /dashboard index route
-- [ ] 02-05-PLAN.md — Paste-parse vertical slice: PasteParseFlow + ConfirmTable + remember-sources + Settings estimate field
+- [x] 02-05-PLAN.md — Paste-parse vertical slice: PasteParseFlow + ConfirmTable + remember-sources + Settings estimate field
 **UI hint:** yes
 
 ### Phase 3: Expense Model + Sinking Funds
