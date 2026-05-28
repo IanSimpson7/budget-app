@@ -18,7 +18,7 @@ Every phase's plans must structurally enforce these — not merely document them
 
 ## Phases
 
-- [ ] **Phase 1: Foundation, Storage, Deploy** — Vite+React+TS app deployed to GitHub Pages with IndexedDB persistence and JSON export/import on day one
+- [x] **Phase 1: Foundation, Storage, Deploy** — Vite+React+TS app deployed to GitHub Pages with IndexedDB persistence and JSON export/import on day one
 - [ ] **Phase 2: Income Model with Two Floors** — Ian can enter checks (typed + paste-parse) and see income-to-date against both passive floor and defended line
 - [ ] **Phase 3: Expense Model + Sinking Funds** — Protected vs gateable line items, derived survival floor, generic sinking-fund primitive (car insurance instance)
 - [ ] **Phase 4: Food Contract (Locked Floor)** — Read-only SMC integration: ingredient-keyed food floor pricing with locked UI, fallback-high, unpriced-ingredient guard
@@ -42,7 +42,7 @@ Every phase's plans must structurally enforce these — not merely document them
 **Plans:** 3 plans
 - [x] 01-01-PLAN.md — Scaffold Vite+React+TS, pin Tailwind v3, Wave 0 test stubs (commits: db362a5, d4f19f9; SUMMARY: 01-01-SUMMARY.md)
 - [x] 01-02-PLAN.md — Walking skeleton vertical slice: Dexie + storage abstraction + settings atoms + Settings/Backup pages with HashRouter (commits: b91d051, 6f6ff23, a0a75a7, 426cfc6, fd5ca96, 9efd70a; SUMMARY: 01-02-SUMMARY.md)
-- [ ] 01-03-PLAN.md — GitHub Actions deploy + phone verification + CLAUDE.md/README.md update
+- [x] 01-03-PLAN.md — GitHub Actions deploy + phone verification + CLAUDE.md/README.md update (commits: 292c0cc, 9c115ff; SUMMARY: 01-03-SUMMARY.md; live: https://iansimpson7.github.io/budget-app/)
 **Leverage-pause:** state/data-model architecture decision — surface for Ian's sign-off before deep implementation (per spec §calibration)
 **UI hint:** yes
 
@@ -115,7 +115,7 @@ Every phase's plans must structurally enforce these — not merely document them
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation, Storage, Deploy | 0/3 | Planned | - |
+| 1. Foundation, Storage, Deploy | 3/3 | Complete | 2026-05-28 |
 | 2. Income Model with Two Floors | 0/? | Not started | - |
 | 3. Expense Model + Sinking Funds | 0/? | Not started | - |
 | 4. Food Contract (Locked Floor) | 0/? | Not started | - |
@@ -141,4 +141,4 @@ Per-phase totals: P1=10, P2=11, P3=9, P4=16, P5=12 → 58 ✓
 
 ---
 
-*Last updated: 2026-05-28 (Phase 1 planning complete)*
+*Last updated: 2026-05-28 (Phase 1 COMPLETE — app live at https://iansimpson7.github.io/budget-app/)*

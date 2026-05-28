@@ -98,9 +98,9 @@ Every requirement below is consistent with C1–C3. Any future requirement that 
 
 ### Deploy
 
-- [ ] **DEP-01**: App builds to a static bundle deployable to GitHub Pages
-- [ ] **DEP-02**: GitHub Actions workflow builds and deploys on push to `main`
-- [ ] **DEP-03**: Build references no external services that require credentials at runtime (constraint C2)
+- [x] **DEP-01**: App builds to a static bundle deployable to GitHub Pages
+- [x] **DEP-02**: GitHub Actions workflow builds and deploys on push to `main`
+- [x] **DEP-03**: Build references no external services that require credentials at runtime (constraint C2)
 
 ---
 
@@ -154,10 +154,10 @@ Populated by `gsd-roadmapper` 2026-05-27.
 | FOUND-04 | Phase 1 | Pending |
 | FOUND-05 | Phase 1 | Pending |
 | FOUND-06 | Phase 1 | Pending |
-| UI-05 | Phase 1 | Pending |
-| DEP-01 | Phase 1 | Pending |
-| DEP-02 | Phase 1 | Pending |
-| DEP-03 | Phase 1 | Pending |
+| UI-05 | Phase 1 | Complete |
+| DEP-01 | Phase 1 | Complete |
+| DEP-02 | Phase 1 | Complete |
+| DEP-03 | Phase 1 | Complete |
 | INC-01 | Phase 2 | Pending |
 | INC-02 | Phase 2 | Pending |
 | INC-03 | Phase 2 | Pending |

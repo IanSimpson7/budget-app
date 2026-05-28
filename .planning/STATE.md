@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-28T02:10:00.000Z"
+last_updated: "2026-05-28T06:00:00.000Z"
 progress:
   total_phases: 5
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
-  percent: 13
+  completed_plans: 3
+  percent: 20
 ---
 
 # State: Budget App
@@ -35,10 +35,10 @@ progress:
 
 ## Current Position
 
-**Phase:** 1 — Foundation, Storage, Deploy
-**Plan:** 01-02 complete; next is 01-03 (GitHub Actions deploy + phone verification)
-**Status:** Executing
-**Progress:** ██░░░░░░░░ 13% (2/3 Phase-1 plans, 0/5 phases)
+**Phase:** 1 — Foundation, Storage, Deploy — **COMPLETE**. Next: Phase 2 (Income Model with Two Floors) planning.
+**Plan:** 01-03 complete (GitHub Pages deploy + phone verification + docs). All Phase 1 plans done.
+**Status:** Phase 1 complete; ready to plan Phase 2
+**Progress:** ██░░░░░░░░ 20% (3/3 Phase-1 plans, 1/5 phases)
 
 ---
 
@@ -47,9 +47,9 @@ progress:
 | Metric | Value |
 |--------|-------|
 | Phases planned | 5 |
-| Phases complete | 0 |
+| Phases complete | 1 |
 | v1 Requirements | 58 (all mapped) |
-| Requirements complete | 0 |
+| Requirements complete | 10 (FOUND-01..06, UI-05, DEP-01..03) |
 
 ---
 
@@ -87,6 +87,13 @@ progress:
 - jsdom Blob.prototype.text() polyfill added to test/setup.ts via FileReader (required for storage.importAll under Vitest).
 - T-01-08 boundary recorded for Phase 4: `floors.foodSeed` is user-editable both directions in Phase 1; the C1 lock applies to the future `settings['foodFloor']` singleton specifically, not to the seed.
 
+### Key Decisions (added 01-03)
+
+- GitHub coordinates: account **IanSimpson7**, repo **budget-app** — matches hardcoded vite base '/budget-app/'; no config change needed.
+- Deploy workflow test-gates (`npm run test -- --run`) BEFORE build; a failing test blocks deploy.
+- Pages source = "GitHub Actions" (artifact flow), not a gh-pages branch. All actions are official GitHub-owned, pinned to MAJOR tags (T-01-13).
+- Live URL: https://iansimpson7.github.io/budget-app/ — phone-verified by Ian.
+
 ### Deferred (v1 → v2)
 
 - OCR-01, OCR-02 (screenshot OCR ingestion + itemized receipt parser) — architect storage seam in v1, defer implementation
@@ -97,6 +104,10 @@ progress:
 ### Blockers
 
 None.
+
+### Dated Follow-ups
+
+- **[ACT BEFORE 2026-06-02] Bump GitHub Actions major-version tags.** `deploy.yml` uses `@v4`/`@v3` actions running on Node 20; GitHub force-migrates runners to Node 24 on 2026-06-02. Bump checkout/setup-node/configure-pages/upload-pages-artifact/deploy-pages to latest majors before then. (Also in 01-03-SUMMARY.md and phase deferred-items.md.)
 
 ### Provisional values to converge during build (per spec §12)
 
@@ -109,11 +120,11 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-28T02:15:00.000Z
+**Last session:** 2026-05-28T06:00:00.000Z
 
-**Stopped at:** Completed 01-02-PLAN.md (walking-skeleton vertical slice). Working tree clean. `npm run build`, `npm test -- --run` (23/23 passing, 0 todo), `npm run typecheck` all green. Commits this plan: `b91d051` (RED storage), `6f6ff23` (GREEN storage), `a0a75a7` (RED atoms), `426cfc6` (GREEN atoms + components), `fd5ca96` (RED BackupPage), `9efd70a` (GREEN pages + App).
+**Stopped at:** Completed 01-03-PLAN.md — **Phase 1 COMPLETE**. Live at https://iansimpson7.github.io/budget-app/ (Ian phone-verified). Deploy workflow green (run 26565927728). Commits this plan: `292c0cc` (deploy workflow), `9c115ff` (CLAUDE.md + README.md docs). Phase 1 = 3/3 plans done; 10/58 requirements complete.
 
-**Next session action:** Execute `01-03-PLAN.md` — GitHub Actions deploy + phone-browser verification + CLAUDE.md/README.md update. Phase 1 ships when the live URL is reachable.
+**Next session action:** Plan Phase 2 (Income Model with Two Floors) — `/gsd-plan` or `/gsd-execute-phase` for Phase 2. Lifts the atomWithObservable ban; validate React 19 atomWithObservable+liveQuery path. NOTE the dated follow-up: bump Actions tags before 2026-06-02.
 
 ---
 
