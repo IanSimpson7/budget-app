@@ -8,6 +8,7 @@ import * as storage from '../storage/storage'
 import {
   sinkingFundsAtom,
   isOnTrack,
+  fundStatus,
   monthsUntilPayout,
   markFundPaidAtom,
 } from '../domains/funds/funds.atoms'
@@ -70,34 +71,41 @@ describe('monthsUntilPayout', () => {
   })
 })
 
-// ── isOnTrack ──────────────────────────────────────────────────────────────
+// ── fundStatus / isOnTrack (rate-based, chosen 2026-05-29) ──────────────────
+//
+// Status is rate-based, NOT projected-balance-based: a normal $0 mid-cycle fund
+// whose accrual rate covers a full cycle is on-track and must not false-alarm.
 
-describe('isOnTrack', () => {
-  it('returns false for car insurance at initial state (balance=0, 9 months out)', () => {
-    // From 2026-06 to 2027-03 = 9 months; 0 + 82×9 = 738 < 982 → behind
-    // We freeze the test-relative calculation by using monthsUntilPayout on a future date
+describe('fundStatus', () => {
+  it('is on-track for car insurance at seed state (balance=0, $82/mo covers $984 ≥ $982)', () => {
+    // Regression for the projected-balance false alarm: $0 balance with a future
+    // payout previously showed "Behind"; the rate covers the cycle so it is on-track.
     const fund: SinkingFund = { ...CAR_FUND, id: 1, payoutDate: '2027-03' }
-    // Can only assert the result depends on the formula; at 0 balance from 2026
-    // it should be behind unless 9+ months elapsed
-    const months = monthsUntilPayout('2027-03')
-    const projected = 0 + 82 * months
-    const expected = projected >= 982
-    expect(isOnTrack(fund)).toBe(expected)
-  })
-
-  it('returns true when projected balance meets annualAmount', () => {
-    // balance=982, monthlyAccrual=82, payoutDate well in the future
-    const fund: SinkingFund = { ...CAR_FUND, id: 1, balance: 982, payoutDate: '2030-01' }
+    expect(fundStatus(fund)).toBe('on-track')
     expect(isOnTrack(fund)).toBe(true)
   })
 
-  it('returns false when projected balance falls short', () => {
-    // balance=0, accrual=10, amount=982, payout 1 month away → 0+10=10 < 982
-    const nextMonth = new Date()
-    nextMonth.setMonth(nextMonth.getMonth() + 1)
-    const payoutDate = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}`
-    const fund: SinkingFund = { ...CAR_FUND, id: 1, balance: 0, monthlyAccrual: 10, payoutDate }
+  it('is on-track when fully funded regardless of rate', () => {
+    const fund: SinkingFund = { ...CAR_FUND, id: 1, balance: 982, monthlyAccrual: 1, payoutDate: '2030-01' }
+    expect(fundStatus(fund)).toBe('on-track')
+  })
+
+  it('is behind when the accrual rate cannot cover a full cycle and it is unfunded', () => {
+    // accrual 10 × 12 = 120 < 982, future payout, balance 0 → genuine rate shortfall
+    const fund: SinkingFund = { ...CAR_FUND, id: 1, balance: 0, monthlyAccrual: 10, payoutDate: '2030-01' }
+    expect(fundStatus(fund)).toBe('behind')
     expect(isOnTrack(fund)).toBe(false)
+  })
+
+  it('is overdue when the payout month has passed and it is still unfunded', () => {
+    const fund: SinkingFund = { ...CAR_FUND, id: 1, balance: 0, payoutDate: '2020-01' }
+    expect(fundStatus(fund)).toBe('overdue')
+    expect(isOnTrack(fund)).toBe(false)
+  })
+
+  it('is on-track when funded even if the payout month has passed', () => {
+    const fund: SinkingFund = { ...CAR_FUND, id: 1, balance: 982, payoutDate: '2020-01' }
+    expect(fundStatus(fund)).toBe('on-track')
   })
 })
 

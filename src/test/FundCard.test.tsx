@@ -1,7 +1,7 @@
 // FundCard.test.tsx — Task 1 acceptance criteria.
 // Tests:
 //   - renders car-insurance fund (balance 0, accrual 82, target 982, payout 2027-03)
-//   - status text "Behind" when balance=0 against 2027-03 payout
+//   - status "On track" at seed (rate $82×12=$984 ≥ $982), "Behind" when rate too low, "Overdue" when past due unfunded
 //   - role="progressbar" with correct aria-valuemax
 //   - provisional advisory renders when provisional=true
 //   - C3 structural check: no transfer/execute/move-money text
@@ -44,10 +44,23 @@ describe('FundCard', () => {
     expect(screen.getByText(/Due March 2027/i)).toBeDefined()
   })
 
-  it('shows "Behind" status when balance=0 with months remaining until payout', () => {
+  it('shows "On track" at seed state — rate covers the cycle despite $0 balance', () => {
     render(<FundCard fund={carInsuranceFund} onEdit={noop} onMarkPaid={noop} onRemove={noop} />)
-    // balance=0, months to March 2027 > 0 → projected < 982 → Behind
+    // balance=0 but $82×12=$984 ≥ $982 → rate-based on-track (no false alarm)
+    expect(screen.getByText('On track')).toBeDefined()
+  })
+
+  it('shows "Behind" only when the accrual rate is too low to cover the cycle', () => {
+    // $40×12 = $480 < $982, future payout, unfunded → genuine rate shortfall
+    const underRated: SinkingFund = { ...carInsuranceFund, monthlyAccrual: 40 }
+    render(<FundCard fund={underRated} onEdit={noop} onMarkPaid={noop} onRemove={noop} />)
     expect(screen.getByText('Behind')).toBeDefined()
+  })
+
+  it('shows "Overdue" when the payout month has passed and the fund is unfunded', () => {
+    const pastDue: SinkingFund = { ...carInsuranceFund, payoutDate: '2020-01' }
+    render(<FundCard fund={pastDue} onEdit={noop} onMarkPaid={noop} onRemove={noop} />)
+    expect(screen.getByText('Overdue')).toBeDefined()
   })
 
   it('renders role="progressbar" with correct aria-valuemax', () => {

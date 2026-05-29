@@ -7,11 +7,18 @@
 //   label (not color alone) per a11y spec.
 
 import type { SinkingFund } from '../storage/schema'
-import { isOnTrack } from '../domains/funds/funds.atoms'
+import { fundStatus, type FundStatus } from '../domains/funds/funds.atoms'
 import SecondaryButton from './SecondaryButton'
 import DestructiveButton from './DestructiveButton'
 
 const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
+
+// Status → label + token color. Text label (not color alone) per a11y spec.
+const STATUS_DISPLAY: Record<FundStatus, { label: string; text: string; fill: string }> = {
+  'on-track': { label: 'On track', text: 'text-success', fill: 'bg-success' },
+  behind: { label: 'Behind', text: 'text-warning', fill: 'bg-warning' },
+  overdue: { label: 'Overdue', text: 'text-destructive', fill: 'bg-destructive' },
+}
 
 // Format YYYY-MM → "Month YYYY" using local Date constructor (Pitfall 2).
 function formatPayoutDate(payoutDate: string): string {
@@ -30,7 +37,8 @@ export type FundCardProps = {
 }
 
 export default function FundCard({ fund, onEdit, onMarkPaid, onRemove }: FundCardProps) {
-  const onTrack = isOnTrack(fund)
+  const status = fundStatus(fund)
+  const display = STATUS_DISPLAY[status]
   const fillPercent = Math.min(100, fund.annualAmount > 0 ? (fund.balance / fund.annualAmount) * 100 : 0)
 
   return (
@@ -38,10 +46,8 @@ export default function FundCard({ fund, onEdit, onMarkPaid, onRemove }: FundCar
       {/* Name + status badge row */}
       <div className="flex justify-between items-center">
         <span className="font-sans text-sm font-semibold text-text-primary">{fund.name}</span>
-        <span
-          className={`font-sans text-xs font-semibold ${onTrack ? 'text-success' : 'text-warning'}`}
-        >
-          {onTrack ? 'On track' : 'Behind'}
+        <span className={`font-sans text-xs font-semibold ${display.text}`}>
+          {display.label}
         </span>
       </div>
 
@@ -52,7 +58,7 @@ export default function FundCard({ fund, onEdit, onMarkPaid, onRemove }: FundCar
           aria-valuenow={fund.balance}
           aria-valuemin={0}
           aria-valuemax={fund.annualAmount}
-          className={`h-full rounded-sm ${onTrack ? 'bg-success' : 'bg-warning'}`}
+          className={`h-full rounded-sm ${display.fill}`}
           style={{ width: `${fillPercent}%` }}
         />
       </div>

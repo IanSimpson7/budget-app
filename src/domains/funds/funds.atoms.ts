@@ -36,24 +36,46 @@ export const sinkingFundAccrualsAtom = atom((get): number =>
 // local month in negative-offset timezones.
 
 export function monthsUntilPayout(payoutDate: string): number {
+  return Math.max(0, payoutMonthsDelta(payoutDate))
+}
+
+// Signed month delta to the payout month: negative when the payout month is in
+// the past, 0 in the current month, positive in the future. Unclamped so callers
+// can distinguish "overdue" from "due this month". Parses YYYY-MM via the local
+// Date frame per Pitfall 2.
+function payoutMonthsDelta(payoutDate: string): number {
   const parts = payoutDate.split('-').map(Number)
   const py = parts[0] ?? 0
   const pm = parts[1] ?? 1
   const now = new Date()
-  const cy = now.getFullYear()
-  const cm = now.getMonth() + 1
-  return Math.max(0, (py - cy) * 12 + (pm - cm))
+  return (py - now.getFullYear()) * 12 + (pm - (now.getMonth() + 1))
 }
 
-// ── isOnTrack (pure function, D-06) ───────────────────────────────────────────
+// ── fundStatus (pure function, D-06 — rate-based) ─────────────────────────────
 //
-// projected = balance + monthlyAccrual × months_until_payout
-// onTrack   = projected >= annualAmount
+// Status semantics (chosen 2026-05-29, supersedes the original projected-balance
+// model that false-alarmed a normal $0 mid-cycle fund):
+//   on-track → fully funded, OR the accrual RATE covers a full annual cycle
+//              (monthlyAccrual × 12 >= annualAmount). Current balance is NOT
+//              held against the fund — a $0 balance partway through a cycle is
+//              normal and must not raise a "behind" alarm (clinical-safety posture).
+//   behind   → not yet funded AND the rate is structurally too low to ever cover
+//              the cycle. This is the only genuine early warning we surface.
+//   overdue  → the payout month has passed and the fund is still not fully funded.
 
+export type FundStatus = 'on-track' | 'behind' | 'overdue'
+
+export function fundStatus(fund: SinkingFund): FundStatus {
+  const funded = fund.balance >= fund.annualAmount
+  if (funded) return 'on-track'
+  if (payoutMonthsDelta(fund.payoutDate) < 0) return 'overdue'
+  if (fund.monthlyAccrual * 12 >= fund.annualAmount) return 'on-track'
+  return 'behind'
+}
+
+// Backward-compatible boolean wrapper. True only for the on-track state.
 export function isOnTrack(fund: SinkingFund): boolean {
-  const months = monthsUntilPayout(fund.payoutDate)
-  const projected = fund.balance + fund.monthlyAccrual * months
-  return projected >= fund.annualAmount
+  return fundStatus(fund) === 'on-track'
 }
 
 // ── Write atoms ────────────────────────────────────────────────────────────────

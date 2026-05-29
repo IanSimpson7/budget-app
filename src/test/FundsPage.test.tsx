@@ -45,7 +45,7 @@ const mockUpdateFund = vi.fn()
 
 vi.mock('../domains/funds/funds.atoms', async () => {
   const { atom } = await import('jotai')
-  const { isOnTrack, monthsUntilPayout } = await import('../domains/funds/funds.atoms')
+  const { isOnTrack, fundStatus, monthsUntilPayout } = await import('../domains/funds/funds.atoms')
 
   // sinkingFundsAtom: sync atom reading from mockFunds (avoids Suspense stall)
   const sinkingFundsAtom = atom(() => mockFunds)
@@ -78,6 +78,7 @@ vi.mock('../domains/funds/funds.atoms', async () => {
     deleteFundAtom,
     updateFundAtom,
     isOnTrack,
+    fundStatus,
     monthsUntilPayout,
   }
 })
