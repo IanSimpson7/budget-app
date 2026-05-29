@@ -13,11 +13,13 @@ import {
   CURRENT_SCHEMA_VERSION,
   DEFAULT_FLOORS,
   ImportError,
+  type ExpenseItem,
   type ExportEnvelope,
   type Floors,
   type IncomeCheck,
   type KnownSource,
   type SchemaV1Data,
+  type SinkingFund,
 } from './schema'
 
 const FLOORS_KEY = 'floors'
@@ -59,6 +61,114 @@ export async function updateIncomeCheck(id: number, patch: Partial<IncomeCheck>)
 
 export async function deleteIncomeCheck(id: number): Promise<void> {
   await db.incomeChecks.delete(id)
+}
+
+// ── Expense CRUD (EXP-01, EXP-02) ────────────────────────────────────────
+// Mirrors income CRUD verbatim. The { ...item } spread avoids fake-indexeddb
+// mutating the caller's object with the auto-generated id (same as addIncomeCheck).
+// T-03-02: guard against non-finite amounts before writing to IndexedDB.
+
+export async function addExpenseItem(item: Omit<ExpenseItem, 'id'>): Promise<number> {
+  if (!Number.isFinite(item.amount)) {
+    throw new Error(`addExpenseItem: non-finite amount (${item.amount})`)
+  }
+  return db.expenseItems.add({ ...item } as ExpenseItem)
+}
+
+export async function listExpenseItems(): Promise<ExpenseItem[]> {
+  return db.expenseItems.toArray()
+}
+
+export async function updateExpenseItem(id: number, patch: Partial<ExpenseItem>): Promise<void> {
+  await db.expenseItems.update(id, patch)
+}
+
+export async function deleteExpenseItem(id: number): Promise<void> {
+  await db.expenseItems.delete(id)
+}
+
+// Returns a Dexie Observable so atoms import storage, never db (grep gate).
+export function observeExpenseItems(): Observable<ExpenseItem[]> {
+  return liveQuery(() => db.expenseItems.toArray() as Promise<ExpenseItem[]>)
+}
+
+// Seed sentinel key — decouples "no rows" (valid user state after delete) from
+// "never seeded" (first-run state). Pitfall 4 avoidance.
+const EXPENSES_SEEDED_KEY = 'expensesSeeded'
+
+// D-03 seed set: PROTECTED fixed costs ex-food. Car insurance is NOT here (it
+// seeds as the sinking-fund instance). Whey/supplement is NOT here (EXP-07).
+const SEED_EXPENSES: Omit<ExpenseItem, 'id'>[] = [
+  { name: 'Housing all-in', amount: 1300, cadence: 'monthly', classification: 'protected' },
+  { name: 'Electric', amount: 65, cadence: 'monthly', classification: 'protected' },
+  { name: 'Fuel', amount: 238, cadence: 'monthly', classification: 'protected' },
+  { name: 'Claude', amount: 100, cadence: 'monthly', classification: 'protected' },
+]
+
+export async function seedExpensesIfEmpty(): Promise<void> {
+  const sentinelRow = await db.settings.get(EXPENSES_SEEDED_KEY)
+  if (sentinelRow !== undefined) return // already seeded via this function — do not clobber Ian's edits
+  // Also skip if any protected rows already exist (added manually or via import)
+  const protectedCount = await db.expenseItems
+    .where('classification')
+    .equals('protected')
+    .count()
+  if (protectedCount > 0) return
+  for (const item of SEED_EXPENSES) {
+    await db.expenseItems.add({ ...item } as ExpenseItem)
+  }
+  await db.settings.put({ key: EXPENSES_SEEDED_KEY, value: true })
+}
+
+// ── Sinking Fund CRUD (EXP-04, EXP-05) ────────────────────────────────────
+// Same pattern as expense CRUD. T-03-02 guards on financial fields.
+
+export async function addSinkingFund(fund: Omit<SinkingFund, 'id'>): Promise<number> {
+  if (!Number.isFinite(fund.annualAmount)) {
+    throw new Error(`addSinkingFund: non-finite annualAmount (${fund.annualAmount})`)
+  }
+  if (!Number.isFinite(fund.monthlyAccrual)) {
+    throw new Error(`addSinkingFund: non-finite monthlyAccrual (${fund.monthlyAccrual})`)
+  }
+  return db.sinkingFunds.add({ ...fund } as SinkingFund)
+}
+
+export async function listSinkingFunds(): Promise<SinkingFund[]> {
+  return db.sinkingFunds.toArray()
+}
+
+export async function updateSinkingFund(id: number, patch: Partial<SinkingFund>): Promise<void> {
+  await db.sinkingFunds.update(id, patch)
+}
+
+export async function deleteSinkingFund(id: number): Promise<void> {
+  await db.sinkingFunds.delete(id)
+}
+
+export function observeSinkingFunds(): Observable<SinkingFund[]> {
+  return liveQuery(() => db.sinkingFunds.toArray() as Promise<SinkingFund[]>)
+}
+
+const FUNDS_SEEDED_KEY = 'fundsSeeded'
+
+// D-05 seed: car-insurance launch instance. annualAmount is PROVISIONAL — Ian
+// repopulates at renewal. All fields are editable via the /funds surface.
+export async function seedFundsIfEmpty(): Promise<void> {
+  const sentinelRow = await db.settings.get(FUNDS_SEEDED_KEY)
+  if (sentinelRow !== undefined) return // already seeded via this function
+  // Also skip if the user already has funds (e.g. added manually or via import)
+  const existing = await db.sinkingFunds.count()
+  if (existing > 0) return
+  await db.sinkingFunds.add({
+    name: 'Car insurance',
+    annualAmount: 982,
+    monthlyAccrual: 82,
+    balance: 0,
+    payoutDate: '2027-03',
+    cadence: 'annual',
+    provisional: true,
+  } as SinkingFund)
+  await db.settings.put({ key: FUNDS_SEEDED_KEY, value: true })
 }
 
 // ── Known-source settings (D-06) ──────────────────────────────────────────
@@ -112,10 +222,12 @@ async function collectSchemaV1Data(): Promise<SchemaV1Data> {
     settings[FLOORS_KEY] = DEFAULT_FLOORS
   }
   const incomeChecks = await db.incomeChecks.toArray()
+  const expenseItems = await db.expenseItems.toArray()
+  const sinkingFunds = await db.sinkingFunds.toArray()
   return {
     incomeChecks,
-    expenseItems: [],
-    sinkingFunds: [],
+    expenseItems,
+    sinkingFunds,
     accounts: [],
     settings,
   }
@@ -221,7 +333,7 @@ async function replaceAll(data: SchemaV1Data): Promise<void> {
       for (const [key, value] of Object.entries(settings)) {
         await db.settings.put({ key, value })
       }
-      // Re-seed income rows so a v2 backup round-trips income data.
+      // Re-seed income rows so a v3 backup round-trips income data.
       if (Array.isArray(data.incomeChecks) && data.incomeChecks.length > 0) {
         for (const check of data.incomeChecks as IncomeCheck[]) {
           // Strip id so Dexie assigns a fresh auto-increment id on import.
@@ -229,7 +341,26 @@ async function replaceAll(data: SchemaV1Data): Promise<void> {
           await db.incomeChecks.add(rest as IncomeCheck)
         }
       }
-      // expenseItems / sinkingFunds / accounts not yet populated (future phases).
+      // Restore expense rows — validate financial fields (T-03-01 tampering mitigation).
+      if (Array.isArray(data.expenseItems) && data.expenseItems.length > 0) {
+        for (const raw of data.expenseItems as ExpenseItem[]) {
+          if (!Number.isFinite(raw.amount)) {
+            throw new ImportError('INVALID_ENVELOPE')
+          }
+          const { id: _id, ...rest } = raw
+          await db.expenseItems.add(rest as ExpenseItem)
+        }
+      }
+      // Restore sinking fund rows — validate financial fields (T-03-01).
+      if (Array.isArray(data.sinkingFunds) && data.sinkingFunds.length > 0) {
+        for (const raw of data.sinkingFunds as SinkingFund[]) {
+          if (!Number.isFinite(raw.annualAmount) || !Number.isFinite(raw.monthlyAccrual)) {
+            throw new ImportError('INVALID_ENVELOPE')
+          }
+          const { id: _id, ...rest } = raw
+          await db.sinkingFunds.add(rest as SinkingFund)
+        }
+      }
     },
   )
 }
