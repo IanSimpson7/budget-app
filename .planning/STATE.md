@@ -36,12 +36,11 @@ progress:
 
 ## Current Position
 
-Phase: 03 (expense-model-sinking-funds) — EXECUTING
-Plan: 1 of 3
-**Phase:** 4
+**Phase:** 4 (food-contract-locked-floor)
 **Plan:** Not started
-**Status:** Ready to plan
-**Progress:** [██████████] 100%
+**Status:** Ready to discuss/plan
+**Progress:** ████░░░░░░ 60% (3/5 phases complete)
+**Last completed:** Phase 3 — expense-model-sinking-funds (3/3 plans, UAT passed 2026-05-29)
 
 ---
 
@@ -82,7 +81,18 @@ Plan: 1 of 3
 ### Open Loops
 
 - **LEVERAGE-PAUSE-1**: RESOLVED in CONTEXT.md (Jotai + Dexie + storage abstraction, D-01..D-11)
-- **PLAN-FORMAT-CONFIRM**: Confirm real `plans/<date>.md` format against a live sample in `../schedule-meal-coordinator/plans/` BEFORE Phase 4 parser implementation (per spec §5g)
+- **PLAN-FORMAT-CONFIRM**: ✅ RESOLVED 2026-05-29 against live samples in `../schedule-meal-coordinator/plans/`. Findings feed Phase 4 (see "SMC plan format — confirmed" below). Spec §5g was incomplete.
+
+### SMC plan format — confirmed (2026-05-29, feeds Phase 4 parser)
+
+Verified against `../schedule-meal-coordinator/plans/*.md` (5 live files). Spec §5g assumed `plans/<date>.md`; reality is richer. Phase 4 parser MUST handle:
+
+- **Filenames**: single-date `YYYY-MM-DD.md` AND date-range `YYYY-MM-DD--YYYY-MM-DD.md` (batch windows). Both forms coexist.
+- **Frontmatter**: `window_start`, `window_end`, `mode` (e.g. batch), `manifest_hash`, `generated_at`, `plan_version` (currently 1.2), `constraint_conflicts[]`, `auditor_note`.
+- **Body**: `## Prep this batch` (batch items), per-day `## YYYY-MM-DD (Weekday)` + context line (wake/lift/home/forbidden window), per-slot `### N. TIME — slot-type · [STATUS]` then `**Food:**` / `**Selector:**` / `**Dimensions:**` and an optional embedded ```yaml counterfactual_if_rejected / rejected_candidates``` block.
+- **CRITICAL — no pricing in SMC**: `**Food:**` values are prose meal strings ("Chicken, rice, and broccoli", "Pasta, beef, cheese, green beans"), NO quantities, NO costs. The food floor CANNOT be sourced from SMC pricing — it must come from the app's OWN unit-cost map (PROJECT decision: "manual unit-cost map UI in v1"). Parser must: tokenize ingredients from mixed separators (`,`, "and", "with"), price against the map, and `fallback-high` on any unpriced token (FOOD unpriced-ingredient guard; conservative per C1 — never understate the protected floor).
+- **Non-decomposable meals**: some `**Food:**` entries are whole-meal/restaurant items with no extractable ingredients (e.g. "Qdoba bowl"). Need meal-level pricing OR fallback-high; cannot assume every entry splits into ingredients.
+- Known meal corpus (14 unique strings as of 2026-05-29): Cereal and milk · Chicken, rice, and broccoli · Eggs and PB toast · French Toast and Eggs · Greek yogurt with granola and berries · Oatmeal and protein slop · Oatmeal cream pie and banana · Pasta, beef, cheese, green beans · Protein Slop and Granola · Protein shake and banana · Qdoba bowl · Rice cakes with peanut butter and banana · Sweet potato, beef, cheese, green beans · Turkey sandwich with cheese and green beans.
 
 ### Key Decisions (added 01-01)
 
@@ -134,11 +144,11 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-29T15:47:39.726Z
+**Last session:** 2026-05-29T16:43:00-04:00
 
-**Stopped at:** Phase 03 UI-SPEC approved
+**Stopped at:** Phase 3 COMPLETE — executed (3/3 plans), code-reviewed (0 blockers), secured (10/10 threats closed), verified + human UAT passed (6/6). Post-UAT fix `310dbf7` shipped: rate-based fund status (replaced projected-balance model that false-alarmed "Behind" on a normal $0 mid-cycle fund). All 212 tests pass.
 
-**Next session action:** Plan Phase 3 (Expense Model + Sinking Funds) — `/clear` then `/gsd-plan-phase 03 budget project`. Key locked decisions: typed-only entry (CC adapter re-scoped to Phase 5), single `classification` enum, seed §4a fixed costs, manual-balance sinking-fund primitive with provisional editable target + mark-paid/recurring-auto-roll, survival floor = fixed_ex_food + foodSeed as a dashboard card, new `/expenses` + `/funds` routes. NOTE the dated follow-up: bump Actions tags before 2026-06-02 (armed scheduled agent runs 2026-06-01).
+**Next session action:** Start Phase 4 (Food Contract — Locked Floor) — `/clear` then `/gsd-discuss-phase 4`. PLAN-FORMAT-CONFIRM is now RESOLVED — read the "SMC plan format — confirmed" block above before planning; it changes the parser scope (date-range filenames, no SMC pricing → app's own unit-cost map, prose ingredient tokenization, fallback-high unpriced guard, non-decomposable meals like "Qdoba bowl"). Phase 4 must respect C1: food floor structurally non-editable downward; `settings['foodFloor']` singleton guarded. NOTE dated follow-up: bump GitHub Actions tags before 2026-06-02 (armed scheduled agent runs 2026-06-01).
 
 ---
 
