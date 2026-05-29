@@ -20,7 +20,7 @@ Every phase's plans must structurally enforce these — not merely document them
 
 - [x] **Phase 1: Foundation, Storage, Deploy** — Vite+React+TS app deployed to GitHub Pages with IndexedDB persistence and JSON export/import on day one
 - [ ] **Phase 2: Income Model with Two Floors** — Ian can enter checks (typed + paste-parse) and see income-to-date against both passive floor and defended line
-- [ ] **Phase 3: Expense Model + Sinking Funds** — Protected vs gateable line items, derived survival floor, generic sinking-fund primitive (car insurance instance)
+- [x] **Phase 3: Expense Model + Sinking Funds** — Protected vs gateable line items, derived survival floor, generic sinking-fund primitive (car insurance instance) (completed 2026-05-29)
 - [ ] **Phase 4: Food Contract (Locked Floor)** — Read-only SMC integration: ingredient-keyed food floor pricing with locked UI, fallback-high, unpriced-ingredient guard
 - [ ] **Phase 5: Surplus Router + Unified Dashboard** — EF-first recommendation engine, gradual sweep, backfill-vs-sweep gate, phone-readable dashboard
 
@@ -78,10 +78,10 @@ Every phase's plans must structurally enforce these — not merely document them
   4. When the annual sinking-fund payout date arrives, the cost is covered from the accrued balance and does NOT appear as a monthly shock
   5. A second sinking-fund instance (e.g. car-purchase fund) can be added by Ian via the same UI without code changes
   6. Whey/supplement spending does NOT appear in fixed-ex-food (deferred to the protected food floor in Phase 4)
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 - [x] 03-01-PLAN.md — Schema v2→v3 + expense/fund storage CRUD + seeds + export wiring + reactive atom chain (survivalFloorAtom, mark-paid) + Wave 0 tests
 - [x] 03-02-PLAN.md — /expenses vertical slice: form primitives + categorized protected/gateable view + dashboard survival-floor card + routes/nav
-- [ ] 03-03-PLAN.md — /funds vertical slice: FundCard + FundsPage (add/edit/mark-paid/delete) + /funds route
+- [x] 03-03-PLAN.md — /funds vertical slice: FundCard + FundsPage (add/edit/mark-paid/delete) + /funds route
 **UI hint:** yes
 
 ### Phase 4: Food Contract (Locked Floor)
@@ -125,7 +125,7 @@ Every phase's plans must structurally enforce these — not merely document them
 |-------|----------------|--------|-----------|
 | 1. Foundation, Storage, Deploy | 3/3 | Complete | 2026-05-28 |
 | 2. Income Model with Two Floors | 0/5 | Planned | - |
-| 3. Expense Model + Sinking Funds | 2/3 | In Progress|  |
+| 3. Expense Model + Sinking Funds | 3/3 | Complete   | 2026-05-29 |
 | 4. Food Contract (Locked Floor) | 0/? | Not started | - |
 | 5. Surplus Router + Unified Dashboard | 0/? | Not started | - |
 
