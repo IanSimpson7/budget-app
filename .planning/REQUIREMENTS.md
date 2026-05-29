@@ -83,7 +83,7 @@ Every requirement below is consistent with C1–C3. Any future requirement that 
 - [ ] **UI-01**: Dashboard renders income-to-date vs both floors, protected-vs-discretionary spend split, surplus amount, and recommended sweep
 - [ ] **UI-02**: Food panel renders the protected floor (locked, visibly non-editable downward) and the gateable discretionary food layer side by side
 - [x] **UI-03**: Entry surface supports typed entry and paste-parse with a confirm step before commit — satisfied by Phase 2
-- [ ] **UI-04**: Funds surface shows EF progress (current → 3-mo → 6-mo) and all sinking-fund instances with progress toward payout dates
+- [x] **UI-04**: Funds surface shows EF progress (current → 3-mo → 6-mo) and all sinking-fund instances with progress toward payout dates
 - [x] **UI-05**: Backup surface exposes JSON export and import actions — satisfied by 01-02
 - [ ] **UI-06**: UI is responsive — phone view of dashboard is readable (entry is laptop-primary, but viewing state on phone works)
 
@@ -176,7 +176,7 @@ Populated by `gsd-roadmapper` 2026-05-27.
 | EXP-05 | Phase 3 | Complete |
 | EXP-06 | Phase 3 | Complete |
 | EXP-07 | Phase 3 | Complete |
-| UI-04 | Phase 3 | Pending |
+| UI-04 | Phase 3 | Complete |
 | EDGE-06 | Phase 3 | Complete |
 | FOOD-01 | Phase 4 | Pending |
 | FOOD-02 | Phase 4 | Pending |
