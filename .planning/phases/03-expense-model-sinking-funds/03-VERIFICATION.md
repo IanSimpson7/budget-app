@@ -1,8 +1,10 @@
 ---
 phase: 03-expense-model-sinking-funds
-verified: 2026-05-29T13:03:00-04:00
-status: human_needed
+verified: 2026-05-29T14:30:00-04:00
+status: passed
 score: 6/6 must-haves verified
+human_uat: passed 2026-05-29 (all 6 items confirmed by Ian; see 03-HUMAN-UAT.md)
+post_uat_fix: 310dbf7 rate-based fund status (resolved false "Behind" alarm surfaced in UAT)
 overrides_applied: 0
 human_verification:
   - test: "Add an expense line via /expenses and confirm it appears in the correct Protected vs Gateable column"
