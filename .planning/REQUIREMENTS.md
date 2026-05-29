@@ -42,13 +42,13 @@ Every requirement below is consistent with C1–C3. Any future requirement that 
 
 ### Expense Model
 
-- [ ] **EXP-01**: User can record expense line items (`{name, amount, cadence, category, protected, gateable}`) where cadence ∈ {monthly, annual, oneoff}
-- [ ] **EXP-02**: Expenses are classified as PROTECTED (fixed + protected food floor + flavor line) or GATEABLE (discretionary food layer + discretionary non-food)
-- [ ] **EXP-03**: Survival floor is computed as `fixed_ex_food + protected_food_floor` and updates automatically when either input changes
-- [ ] **EXP-04**: App provides ONE generic sinking-fund primitive (`{name, annualAmount, monthlyAccrual, balance, payoutDate}`); car insurance is the launch instance
-- [ ] **EXP-05**: Adding a new sinking-fund instance (e.g. car-purchase fund) requires zero new code paths — only a new instance of the primitive
-- [ ] **EXP-06**: When an annual cost is due (e.g. car insurance), the cost is covered from the sinking-fund balance and does NOT appear as a budget shock that month
-- [ ] **EXP-07**: Whey/supplement spending is tracked inside the food floor (§5), never double-counted in fixed-ex-food
+- [x] **EXP-01**: User can record expense line items (`{name, amount, cadence, category, protected, gateable}`) where cadence ∈ {monthly, annual, oneoff}
+- [x] **EXP-02**: Expenses are classified as PROTECTED (fixed + protected food floor + flavor line) or GATEABLE (discretionary food layer + discretionary non-food)
+- [x] **EXP-03**: Survival floor is computed as `fixed_ex_food + protected_food_floor` and updates automatically when either input changes
+- [x] **EXP-04**: App provides ONE generic sinking-fund primitive (`{name, annualAmount, monthlyAccrual, balance, payoutDate}`); car insurance is the launch instance
+- [x] **EXP-05**: Adding a new sinking-fund instance (e.g. car-purchase fund) requires zero new code paths — only a new instance of the primitive
+- [x] **EXP-06**: When an annual cost is due (e.g. car insurance), the cost is covered from the sinking-fund balance and does NOT appear as a budget shock that month
+- [x] **EXP-07**: Whey/supplement spending is tracked inside the food floor (§5), never double-counted in fixed-ex-food
 
 ### FoodNeed Contract
 
@@ -94,7 +94,7 @@ Every requirement below is consistent with C1–C3. Any future requirement that 
 - [ ] **EDGE-03**: Pool gains a new ingredient with no unit cost → unpriced-ingredient flag (FOOD-08)
 - [ ] **EDGE-04**: EF withdrawal → recompute targets, re-prioritize (SURP-09)
 - [x] **EDGE-05**: 3rd check in a month → classified as surplus (INC-04) — satisfied by Phase 2
-- [ ] **EDGE-06**: Annual sinking-fund cost due → covered by accrued balance, not a shock (EXP-06)
+- [x] **EDGE-06**: Annual sinking-fund cost due → covered by accrued balance, not a shock (EXP-06)
 
 ### Deploy
 
@@ -169,15 +169,15 @@ Populated by `gsd-roadmapper` 2026-05-27.
 | UI-03 | Phase 2 | Complete (02-03, 02-05) |
 | EDGE-01 | Phase 2 | Complete (02-02, 02-04) |
 | EDGE-05 | Phase 2 | Complete (02-02, 02-03, 02-05) |
-| EXP-01 | Phase 3 | Pending |
-| EXP-02 | Phase 3 | Pending |
-| EXP-03 | Phase 3 | Pending |
-| EXP-04 | Phase 3 | Pending |
-| EXP-05 | Phase 3 | Pending |
-| EXP-06 | Phase 3 | Pending |
-| EXP-07 | Phase 3 | Pending |
+| EXP-01 | Phase 3 | Complete |
+| EXP-02 | Phase 3 | Complete |
+| EXP-03 | Phase 3 | Complete |
+| EXP-04 | Phase 3 | Complete |
+| EXP-05 | Phase 3 | Complete |
+| EXP-06 | Phase 3 | Complete |
+| EXP-07 | Phase 3 | Complete |
 | UI-04 | Phase 3 | Pending |
-| EDGE-06 | Phase 3 | Pending |
+| EDGE-06 | Phase 3 | Complete |
 | FOOD-01 | Phase 4 | Pending |
 | FOOD-02 | Phase 4 | Pending |
 | FOOD-03 | Phase 4 | Pending |

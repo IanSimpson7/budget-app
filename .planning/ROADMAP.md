@@ -78,8 +78,8 @@ Every phase's plans must structurally enforce these — not merely document them
   4. When the annual sinking-fund payout date arrives, the cost is covered from the accrued balance and does NOT appear as a monthly shock
   5. A second sinking-fund instance (e.g. car-purchase fund) can be added by Ian via the same UI without code changes
   6. Whey/supplement spending does NOT appear in fixed-ex-food (deferred to the protected food floor in Phase 4)
-**Plans:** 3 plans
-- [ ] 03-01-PLAN.md — Schema v2→v3 + expense/fund storage CRUD + seeds + export wiring + reactive atom chain (survivalFloorAtom, mark-paid) + Wave 0 tests
+**Plans:** 1/3 plans executed
+- [x] 03-01-PLAN.md — Schema v2→v3 + expense/fund storage CRUD + seeds + export wiring + reactive atom chain (survivalFloorAtom, mark-paid) + Wave 0 tests
 - [ ] 03-02-PLAN.md — /expenses vertical slice: form primitives + categorized protected/gateable view + dashboard survival-floor card + routes/nav
 - [ ] 03-03-PLAN.md — /funds vertical slice: FundCard + FundsPage (add/edit/mark-paid/delete) + /funds route
 **UI hint:** yes
@@ -125,7 +125,7 @@ Every phase's plans must structurally enforce these — not merely document them
 |-------|----------------|--------|-----------|
 | 1. Foundation, Storage, Deploy | 3/3 | Complete | 2026-05-28 |
 | 2. Income Model with Two Floors | 0/5 | Planned | - |
-| 3. Expense Model + Sinking Funds | 0/3 | Planned | - |
+| 3. Expense Model + Sinking Funds | 1/3 | In Progress|  |
 | 4. Food Contract (Locked Floor) | 0/? | Not started | - |
 | 5. Surplus Router + Unified Dashboard | 0/? | Not started | - |
 
