@@ -31,14 +31,14 @@ Every requirement below is consistent with C1–C3. Any future requirement that 
 
 ### Income Model
 
-- [ ] **INC-01**: User can record a biweekly net income check (`{date, netAmount, source, note}`)
-- [ ] **INC-02**: User can configure two distinct floors: passive floor (working value) and defended line (default $3,000)
-- [ ] **INC-03**: App budgets solvency math against the passive floor, never the income average or the defended line
-- [ ] **INC-04**: Monthly income is baselined on 2 checks/month; a 3rd check in a calendar month is classified as surplus, not new baseline
-- [ ] **INC-05**: Dashboard displays month-to-date income against BOTH lines: solvency band at passive floor, backfill-trigger marker at defended line
-- [ ] **INC-06**: When projected monthly income falls below the defended line, app surfaces a backfill alert ("projected $X, below $3,000 — add sessions to defend")
-- [ ] **INC-07**: User can enter income via typed manual entry as an always-available fallback
-- [ ] **INC-08**: User can paste a block of transaction text and have it parsed into categorized entries with a confirm/edit step before commit (paste-parse pipeline produces transactions, not unit costs)
+- [x] **INC-01**: User can record a biweekly net income check (`{date, netAmount, source, note}`) — satisfied by Phase 2 (verified 2026-05-28)
+- [x] **INC-02**: User can configure two distinct floors: passive floor (working value) and defended line (default $3,000) — satisfied by Phase 2
+- [x] **INC-03**: App budgets solvency math against the passive floor, never the income average or the defended line — satisfied by Phase 2
+- [x] **INC-04**: Monthly income is baselined on 2 checks/month; a 3rd check in a calendar month is classified as surplus, not new baseline — satisfied by Phase 2
+- [x] **INC-05**: Dashboard displays month-to-date income against BOTH lines: solvency band at passive floor, backfill-trigger marker at defended line — satisfied by Phase 2 (CR-01 defended-label fix verified)
+- [x] **INC-06**: When projected monthly income falls below the defended line, app surfaces a backfill alert ("projected $X, below $3,000 — add sessions to defend") — satisfied by Phase 2
+- [x] **INC-07**: User can enter income via typed manual entry as an always-available fallback — satisfied by Phase 2
+- [x] **INC-08**: User can paste a block of transaction text and have it parsed into categorized entries with a confirm/edit step before commit (paste-parse pipeline produces transactions, not unit costs) — satisfied by Phase 2
 
 ### Expense Model
 
@@ -82,18 +82,18 @@ Every requirement below is consistent with C1–C3. Any future requirement that 
 
 - [ ] **UI-01**: Dashboard renders income-to-date vs both floors, protected-vs-discretionary spend split, surplus amount, and recommended sweep
 - [ ] **UI-02**: Food panel renders the protected floor (locked, visibly non-editable downward) and the gateable discretionary food layer side by side
-- [ ] **UI-03**: Entry surface supports typed entry and paste-parse with a confirm step before commit
+- [x] **UI-03**: Entry surface supports typed entry and paste-parse with a confirm step before commit — satisfied by Phase 2
 - [ ] **UI-04**: Funds surface shows EF progress (current → 3-mo → 6-mo) and all sinking-fund instances with progress toward payout dates
 - [x] **UI-05**: Backup surface exposes JSON export and import actions — satisfied by 01-02
 - [ ] **UI-06**: UI is responsive — phone view of dashboard is readable (entry is laptop-primary, but viewing state on phone works)
 
 ### Edge Cases (cross-cutting)
 
-- [ ] **EDGE-01**: Income below passive floor or below defended line surfaces solvency warning / backfill alert; never silently absorbed
+- [x] **EDGE-01**: Income below passive floor or below defended line surfaces solvency warning / backfill alert; never silently absorbed — satisfied by Phase 2
 - [ ] **EDGE-02**: No current meal plan → food floor fallback-high with staleness flag (FOOD-11)
 - [ ] **EDGE-03**: Pool gains a new ingredient with no unit cost → unpriced-ingredient flag (FOOD-08)
 - [ ] **EDGE-04**: EF withdrawal → recompute targets, re-prioritize (SURP-09)
-- [ ] **EDGE-05**: 3rd check in a month → classified as surplus (INC-04)
+- [x] **EDGE-05**: 3rd check in a month → classified as surplus (INC-04) — satisfied by Phase 2
 - [ ] **EDGE-06**: Annual sinking-fund cost due → covered by accrued balance, not a shock (EXP-06)
 
 ### Deploy
@@ -148,27 +148,27 @@ Populated by `gsd-roadmapper` 2026-05-27.
 
 | Requirement | Phase | Status |
 |---|---|---|
-| FOUND-01 | Phase 1 | Complete (01-01) |
-| FOUND-02 | Phase 1 | Pending |
-| FOUND-03 | Phase 1 | Pending |
-| FOUND-04 | Phase 1 | Pending |
-| FOUND-05 | Phase 1 | Pending |
-| FOUND-06 | Phase 1 | Pending |
+| FOUND-01 | Phase 1 | Complete (01-01, 01-03) |
+| FOUND-02 | Phase 1 | Complete (01-02) |
+| FOUND-03 | Phase 1 | Complete (01-02) |
+| FOUND-04 | Phase 1 | Complete (01-02) |
+| FOUND-05 | Phase 1 | Complete (01-02) |
+| FOUND-06 | Phase 1 | Complete (01-02) |
 | UI-05 | Phase 1 | Complete |
 | DEP-01 | Phase 1 | Complete |
 | DEP-02 | Phase 1 | Complete |
 | DEP-03 | Phase 1 | Complete |
-| INC-01 | Phase 2 | Pending |
-| INC-02 | Phase 2 | Pending |
-| INC-03 | Phase 2 | Pending |
-| INC-04 | Phase 2 | Pending |
-| INC-05 | Phase 2 | Pending |
-| INC-06 | Phase 2 | Pending |
-| INC-07 | Phase 2 | Pending |
-| INC-08 | Phase 2 | Pending |
-| UI-03 | Phase 2 | Pending |
-| EDGE-01 | Phase 2 | Pending |
-| EDGE-05 | Phase 2 | Pending |
+| INC-01 | Phase 2 | Complete (02-01, 02-03) |
+| INC-02 | Phase 2 | Complete (02-01) |
+| INC-03 | Phase 2 | Complete (02-02) |
+| INC-04 | Phase 2 | Complete (02-02) |
+| INC-05 | Phase 2 | Complete (02-04; CR-01 fixed) |
+| INC-06 | Phase 2 | Complete (02-02, 02-04) |
+| INC-07 | Phase 2 | Complete (02-03) |
+| INC-08 | Phase 2 | Complete (02-02, 02-05) |
+| UI-03 | Phase 2 | Complete (02-03, 02-05) |
+| EDGE-01 | Phase 2 | Complete (02-02, 02-04) |
+| EDGE-05 | Phase 2 | Complete (02-02, 02-03, 02-05) |
 | EXP-01 | Phase 3 | Pending |
 | EXP-02 | Phase 3 | Pending |
 | EXP-03 | Phase 3 | Pending |
