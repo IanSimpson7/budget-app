@@ -17,6 +17,7 @@ import {
   currentMonthChecksAtom,
 } from '../domains/income/income.atoms'
 import { floorsLoadAtom } from '../domains/settings/settings.atoms'
+import { survivalFloorAtom } from '../domains/expenses/expenses.atoms'
 import IncomeBar from '../components/IncomeBar'
 import MetricCard from '../components/MetricCard'
 import BackfillAlertCard from '../domains/income/BackfillAlertCard'
@@ -37,6 +38,7 @@ export default function DashboardPage() {
   const backfillActive = useAtomValue(backfillActiveAtom, { delay: 0 })
   const currentChecks = useAtomValue(currentMonthChecksAtom, { delay: 0 })
   const floors = useAtomValue(floorsLoadAtom, { delay: 0 })
+  const survivalFloor = useAtomValue(survivalFloorAtom, { delay: 0 })
 
   const month = monthLabel()
   const isEmpty = currentChecks.length === 0
@@ -56,8 +58,8 @@ export default function DashboardPage() {
         defendedLine={floors.defended}
       />
 
-      {/* Three metric cards */}
-      <div className="grid grid-cols-3 gap-sp-2 sm:gap-sp-3">
+      {/* Four metric cards — 2-col on mobile, 4-col on sm+ */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-sp-2 sm:gap-sp-3">
         {/* Month to date */}
         <MetricCard
           label="Month to date"
@@ -82,6 +84,15 @@ export default function DashboardPage() {
             valueColor={isEmpty ? 'text-text-disabled' : 'text-success'}
           />
         )}
+
+        {/* Survival floor — SC#2 (Phase 3). Recomputes live via survivalFloorAtom. */}
+        <MetricCard
+          label="Survival floor"
+          value={currency.format(survivalFloor)}
+          subtext="fixed + food seed"
+          variant="default"
+          valueColor={survivalFloor === 0 ? 'text-text-disabled' : undefined}
+        />
       </div>
 
       {/* Empty state message */}

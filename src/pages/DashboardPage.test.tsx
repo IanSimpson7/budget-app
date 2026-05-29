@@ -31,6 +31,17 @@ vi.mock('../domains/settings/settings.atoms', () => ({
   derivedSurvivalFloorAtom: { init: 2400, read: () => 2400 },
 }))
 
+// ── Mock expenses atoms — survivalFloorAtom added in Plan 03-02 ──────────────
+vi.mock('../domains/expenses/expenses.atoms', () => ({
+  survivalFloorAtom: { init: 2335, read: () => 2335 },
+  expenseItemsAtom: { init: [], read: () => [] },
+  protectedExpensesAtom: { init: [], read: () => [] },
+  gateableExpensesAtom: { init: [], read: () => [] },
+  saveExpenseItemAtom: { init: null },
+  updateExpenseItemAtom: { init: null },
+  deleteExpenseItemAtom: { init: null },
+}))
+
 // ── Mock income atoms — all values inlined to avoid top-level var hoisting issue
 vi.mock('../domains/income/income.atoms', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../domains/income/income.atoms')>()
