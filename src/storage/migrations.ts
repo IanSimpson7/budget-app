@@ -33,6 +33,21 @@ export function migrate_1_to_2(data: SchemaV1Data): SchemaV1Data {
   }
 }
 
+// v2 → v3: expenseItems and sinkingFunds tables were created in v1 but never
+// populated in Phases 1–2 (collectSchemaV1Data always exported [] stubs).
+// This is structurally a no-op data transform — no rows to migrate. The step
+// MUST exist to keep the migration ladder contiguous (D-09 single source of truth).
+// Also handles the case where a v2 export envelope omits those keys (nullish-coalesce
+// to [] ensures the caller always gets typed arrays back).
+export function migrate_2_to_3(data: SchemaV1Data): SchemaV1Data {
+  return {
+    ...data,
+    expenseItems: data.expenseItems ?? [],
+    sinkingFunds: data.sinkingFunds ?? [],
+  }
+}
+
 export const MIGRATIONS: Record<number, MigrationFn> = {
   1: migrate_1_to_2,
+  2: migrate_2_to_3,
 }

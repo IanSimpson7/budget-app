@@ -3,7 +3,7 @@
 // in db.ts and (b) a corresponding MIGRATIONS[N-1] entry in migrations.ts. Single source
 // of truth via the migrations.ts comment block (D-09).
 
-export const CURRENT_SCHEMA_VERSION = 2 as const
+export const CURRENT_SCHEMA_VERSION = 3 as const
 
 export type Floors = Readonly<{
   passive: number // D-12 default 2400 — "Passive income floor — solvency baseline"
@@ -12,6 +12,48 @@ export type Floors = Readonly<{
 }>
 
 export const DEFAULT_FLOORS: Floors = { passive: 2400, defended: 3000, foodSeed: 550 }
+
+// ── Expense model types (Phase 3, D-02, D-10) ─────────────────────────────────
+
+// D-02: single mutually-exclusive classification enum (replaces the spec's two
+// bools protected+gateable to prevent contradictory state).
+export type Classification = 'protected' | 'gateable'
+
+// D-10: cadence drives cadence-normalization in survivalFloorAtom.
+export type Cadence = 'monthly' | 'annual' | 'oneoff'
+
+export type ExpenseItem = Readonly<{
+  id?: number
+  name: string
+  amount: number         // raw entered amount; toMonthlyEquivalent normalises it
+  cadence: Cadence
+  classification: Classification
+}>
+
+// D-05: sinking-fund primitive. cadence distinguishes annual (auto-roll on
+// mark-paid) from oneoff (delete on mark-paid, EDGE-06).
+export type SinkingFundCadence = 'annual' | 'oneoff'
+
+export type SinkingFund = Readonly<{
+  id?: number
+  name: string
+  annualAmount: number    // editable target — provisional for car-insurance seed
+  monthlyAccrual: number  // editable recommended accrual; seeded at annualAmount/12
+  balance: number         // manual; Ian records reality (C3: app never assumes money moved)
+  payoutDate: string      // YYYY-MM month precision
+  cadence: SinkingFundCadence
+  provisional?: boolean   // advisory flag for uncertain targets (D-05)
+}>
+
+// D-10: cadence → monthly-equivalent contribution to the survival floor.
+// monthly = as-is, annual = /12, oneoff = excluded (0).
+export function toMonthlyEquivalent(amount: number, cadence: Cadence): number {
+  if (cadence === 'monthly') return amount
+  if (cadence === 'annual') return amount / 12
+  return 0 // 'oneoff' excluded from recurring floor
+}
+
+// ── Income category classification ────────────────────────────────────────────
 
 // D-08 income category classification
 export type Category = 'payroll' | 'gift' | 'other'

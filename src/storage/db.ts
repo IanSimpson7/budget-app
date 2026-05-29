@@ -1,13 +1,13 @@
 import Dexie, { type Table } from 'dexie'
-import type { IncomeCheck, SettingsRow } from './schema'
+import type { ExpenseItem, IncomeCheck, SettingsRow, SinkingFund } from './schema'
 
 // Dexie subclass. Only the HIGHEST version's .stores() is the live schema; older
 // .version(N).stores().upgrade() pairs are kept for migration history when the
 // schema version advances. See migrations.ts for the source-of-truth contract.
 export class BudgetDatabase extends Dexie {
   incomeChecks!: Table<IncomeCheck, number>
-  expenseItems!: Table<unknown, number>
-  sinkingFunds!: Table<unknown, number>
+  expenseItems!: Table<ExpenseItem, number>
+  sinkingFunds!: Table<SinkingFund, number>
   accounts!: Table<unknown, number>
   settings!: Table<SettingsRow, string>
 
@@ -30,6 +30,18 @@ export class BudgetDatabase extends Dexie {
     this.version(2).stores({
       incomeChecks: '++id, date, source',
       expenseItems: '++id, name, category, protected, cadence',
+      sinkingFunds: '++id, name, payoutDate',
+      accounts: '++id, type',
+      settings: '&key',
+    })
+
+    // v3: typed expenseItems + sinkingFunds tables. Updated index for expenseItems
+    // to use 'classification' enum (replacing the v1 'category, protected' dual-bool
+    // columns — D-02: single classification enum). No .upgrade() data transform
+    // needed: tables were always empty in v2 (migrate_2_to_3 is a no-op for data).
+    this.version(3).stores({
+      incomeChecks: '++id, date, source',
+      expenseItems: '++id, name, classification, cadence',
       sinkingFunds: '++id, name, payoutDate',
       accounts: '++id, type',
       settings: '&key',

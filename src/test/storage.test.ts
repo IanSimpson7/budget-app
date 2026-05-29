@@ -50,7 +50,7 @@ describe('export envelope (FOUND-03)', () => {
   it('exportAll returns envelope with schemaVersion === CURRENT_SCHEMA_VERSION and a parseable ISO exportedAt', async () => {
     const envelope = await storage.exportAll()
     expect(envelope.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
-    expect(envelope.schemaVersion).toBe(2)
+    expect(envelope.schemaVersion).toBe(3)
     expect(typeof envelope.exportedAt).toBe('string')
     expect(Number.isNaN(Date.parse(envelope.exportedAt))).toBe(false)
     expect(typeof envelope.appVersion).toBe('string')
