@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
+status: ready_to_plan
 stopped_at: Phase 03 UI-SPEC approved
 last_updated: "2026-05-29T15:47:39.733Z"
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 11
   completed_plans: 11
-  percent: 100
+  percent: 80
 ---
 
 # State: Budget App
@@ -38,9 +38,9 @@ progress:
 
 Phase: 03 (expense-model-sinking-funds) — EXECUTING
 Plan: 1 of 3
-**Phase:** 3 (expense-model-sinking-funds)
+**Phase:** 4
 **Plan:** Not started
-**Status:** Executing Phase 03
+**Status:** Ready to plan
 **Progress:** [██████████] 100%
 
 ---
