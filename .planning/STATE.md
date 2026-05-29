@@ -36,11 +36,9 @@ progress:
 
 ## Current Position
 
-Phase: 02 (income-model-with-two-floors) — EXECUTING
-Plan: 1 of 5
-**Phase:** 3
+**Phase:** 3 (expense-model-sinking-funds)
 **Plan:** Not started
-**Status:** Ready to plan
+**Status:** Context gathered — ready to plan
 **Progress:** ██░░░░░░░░ 20% (3/3 Phase-1 plans, 1/5 phases)
 
 ---
@@ -131,12 +129,12 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-28T11:30:35.008Z
+**Last session:** 2026-05-29
 
-**Stopped at:** Phase 2 UI-SPEC approved
+**Stopped at:** Phase 3 context gathered (03-CONTEXT.md committed cee445e)
 
-**Next session action:** Plan Phase 2 (Income Model with Two Floors) — `/gsd-plan` or `/gsd-execute-phase` for Phase 2. Lifts the atomWithObservable ban; validate React 19 atomWithObservable+liveQuery path. NOTE the dated follow-up: bump Actions tags before 2026-06-02.
+**Next session action:** Plan Phase 3 (Expense Model + Sinking Funds) — `/clear` then `/gsd-plan-phase 03 budget project`. Key locked decisions: typed-only entry (CC adapter re-scoped to Phase 5), single `classification` enum, seed §4a fixed costs, manual-balance sinking-fund primitive with provisional editable target + mark-paid/recurring-auto-roll, survival floor = fixed_ex_food + foodSeed as a dashboard card, new `/expenses` + `/funds` routes. NOTE the dated follow-up: bump Actions tags before 2026-06-02 (armed scheduled agent runs 2026-06-01).
 
 ---
 
-*Last updated: 2026-05-28*
+*Last updated: 2026-05-29*
