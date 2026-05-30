@@ -99,8 +99,8 @@ Every phase's plans must structurally enforce these — not merely document them
   7. Food panel shows the discretionary food layer (gateable) side-by-side with the protected floor (locked)
 **Plans:** 1/5 plans executed
 - [x] 04-01-PLAN.md — Storage foundation: schema v3→v4 + mealDefinitions table + 4 food settings singletons + CRUD/observers/seed/export round-trip + C1 absence-proofs (FOOD-02/04/05/10/12/13; V6)
-- [ ] 04-02-PLAN.md — SMC plan parser + 5 hermetic fixtures: parsePlanFile both filename + both body formats, 14-meal corpus, null-on-failure (FOOD-01/03; V1/V2)
-- [ ] 04-03-PLAN.md — Cost engine (pure): Σ macro-bearing cost, fallback-high on every gap, monthly derivation, never-lower stale path (FOOD-06/07/08/09, EDGE-02/03; V3/V4/V5)
+- [x] 04-02-PLAN.md — SMC plan parser + 5 hermetic fixtures: parsePlanFile both filename + both body formats, 14-meal corpus, null-on-failure (FOOD-01/03; V1/V2)
+- [x] 04-03-PLAN.md — Cost engine (pure): Σ macro-bearing cost, fallback-high on every gap, monthly derivation, never-lower stale path (FOOD-06/07/08/09, EDGE-02/03; V3/V4/V5)
 - [ ] 04-04-PLAN.md — food.atoms chain (glob loader + foodFloorAtom) + survivalFloorAtom integration + Vite fs.allow + CI-fallback README (FOOD-01/03/06/07/09/11, EDGE-02; V7/V8)
 - [ ] 04-05-PLAN.md — /food + /food/config surfaces: locked floor, status badge, flavor line, gateable join, 3 config tables + C1 6-condition human-verify checkpoint (FOOD-04/05/08/10/11/12/13, UI-02, EDGE-02/03)
 **Build note:** Plan format confirmed in STATE.md; FOOD-02 re-mapped to the app-owned meal table (D-01, no meal_pool.md).
