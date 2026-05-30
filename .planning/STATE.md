@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to discuss/plan
-stopped_at: Phase 4 context gathered
-last_updated: "2026-05-30T00:57:12.131Z"
+status: executing
+stopped_at: Phase 4 UI-SPEC approved
+last_updated: "2026-05-30T02:41:35.493Z"
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 11
+  total_plans: 16
   completed_plans: 11
-  percent: 100
+  percent: 69
 ---
 
 # State: Budget App
@@ -38,7 +38,7 @@ progress:
 
 **Phase:** 4 (food-contract-locked-floor)
 **Plan:** Not started
-**Status:** Ready to discuss/plan
+**Status:** Ready to execute
 **Progress:** ████░░░░░░ 60% (3/5 phases complete)
 **Last completed:** Phase 3 — expense-model-sinking-funds (3/3 plans, UAT passed 2026-05-29)
 
@@ -144,9 +144,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-30T00:57:12.122Z
+**Last session:** 2026-05-30T01:03:04.225Z
 
-**Stopped at:** Phase 4 context gathered
+**Stopped at:** Phase 4 UI-SPEC approved
 
 **Next session action:** Start Phase 4 (Food Contract — Locked Floor) — `/clear` then `/gsd-discuss-phase 4`. PLAN-FORMAT-CONFIRM is now RESOLVED — read the "SMC plan format — confirmed" block above before planning; it changes the parser scope (date-range filenames, no SMC pricing → app's own unit-cost map, prose ingredient tokenization, fallback-high unpriced guard, non-decomposable meals like "Qdoba bowl"). Phase 4 must respect C1: food floor structurally non-editable downward; `settings['foodFloor']` singleton guarded. NOTE dated follow-up: bump GitHub Actions tags before 2026-06-02 (armed scheduled agent runs 2026-06-01).
 
