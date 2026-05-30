@@ -3,7 +3,7 @@
 // in db.ts and (b) a corresponding MIGRATIONS[N-1] entry in migrations.ts. Single source
 // of truth via the migrations.ts comment block (D-09).
 
-export const CURRENT_SCHEMA_VERSION = 3 as const
+export const CURRENT_SCHEMA_VERSION = 4 as const
 
 export type Floors = Readonly<{
   passive: number // D-12 default 2400 — "Passive income floor — solvency baseline"
@@ -83,6 +83,7 @@ export type SchemaV1Data = {
   incomeChecks: unknown[]
   expenseItems: unknown[]
   sinkingFunds: unknown[]
+  mealDefinitions?: unknown[]  // Phase 4 food domain (v4 schema); absent in v1–v3 exports
   accounts: unknown[]
   settings: Record<string, unknown>
 }

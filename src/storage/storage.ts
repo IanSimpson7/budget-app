@@ -224,10 +224,12 @@ async function collectSchemaV1Data(): Promise<SchemaV1Data> {
   const incomeChecks = await db.incomeChecks.toArray()
   const expenseItems = await db.expenseItems.toArray()
   const sinkingFunds = await db.sinkingFunds.toArray()
+  const mealDefinitions = await db.mealDefinitions.toArray()
   return {
     incomeChecks,
     expenseItems,
     sinkingFunds,
+    mealDefinitions,
     accounts: [],
     settings,
   }

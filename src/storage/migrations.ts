@@ -47,7 +47,22 @@ export function migrate_2_to_3(data: SchemaV1Data): SchemaV1Data {
   }
 }
 
+// v3 → v4: mealDefinitions table added (food domain, Phase 4).
+// This is a data no-op: the new table is empty on upgrade; settings singletons
+// (unitCostMap, portionModel, foodFloorMeta, flavorLine) initialize with defaults
+// on first storage.get*() call — no migration data needed for them.
+// The step MUST exist to keep the migration ladder contiguous (D-09).
+// Also nullish-coalesces mealDefinitions to [] when the key is absent from a v3 export.
+export function migrate_3_to_4(data: SchemaV1Data): SchemaV1Data {
+  return {
+    ...data,
+    mealDefinitions: data.mealDefinitions ?? [],
+    // settings singletons initialize at first read via ?? default in storage.ts
+  }
+}
+
 export const MIGRATIONS: Record<number, MigrationFn> = {
   1: migrate_1_to_2,
   2: migrate_2_to_3,
+  3: migrate_3_to_4,
 }
