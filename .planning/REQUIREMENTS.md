@@ -53,18 +53,18 @@ Every requirement below is consistent with C1–C3. Any future requirement that 
 ### FoodNeed Contract
 
 - [ ] **FOOD-01**: App reads `meal_pool.md` from the SMC project (`../schedule-meal-coordinator/`) read-only; never writes to or triggers SMC
-- [ ] **FOOD-02**: App parses meal entries from `meal_pool.md` keyed by `###` header (stable meal name), extracting `categories`, `is_substantial`, and `ingredients` list per meal
+- [x] **FOOD-02**: App parses meal entries from `meal_pool.md` keyed by `###` header (stable meal name), extracting `categories`, `is_substantial`, and `ingredients` list per meal
 - [ ] **FOOD-03**: App reads `plans/<date>.md` (and `plans/<start>--<end>.md`) from the SMC project to determine which meals are scheduled for which dates
-- [ ] **FOOD-04**: User can edit a unit-cost map in-UI (`{ingredient → cost per unit}`) — a simple editable table; this is configuration, not parsed data
-- [ ] **FOOD-05**: User can edit a portion model in-UI (`{ingredient → typical portion per meal}`) — a simple editable table
+- [x] **FOOD-04**: User can edit a unit-cost map in-UI (`{ingredient → cost per unit}`) — a simple editable table; this is configuration, not parsed data
+- [x] **FOOD-05**: User can edit a portion model in-UI (`{ingredient → typical portion per meal}`) — a simple editable table
 - [ ] **FOOD-06**: Meal cost is computed as Σ over macro-bearing ingredients (portion × unit_cost); meal costs are NEVER hard-coded
 - [ ] **FOOD-07**: Period food floor is computed as Σ over meals scheduled in the period; recomputes when pool, plan, unit-cost map, or portion model changes
 - [ ] **FOOD-08**: When the meal pool gains an ingredient with no unit cost, app flags it visibly ("unpriced ingredient — needs unit cost"); does not silently undercount
 - [ ] **FOOD-09**: New meals built from already-priced ingredients price automatically without user action
-- [ ] **FOOD-10**: Flavor/condiment line is a separate fixed monthly amount (seed ~$50/mo, editable), excluded from per-meal pricing, treated as PROTECTED
+- [x] **FOOD-10**: Flavor/condiment line is a separate fixed monthly amount (seed ~$50/mo, editable), excluded from per-meal pricing, treated as PROTECTED
 - [ ] **FOOD-11**: When no current meal plan exists (SMC hasn't run, or there's a gap), food floor falls back to the last-known value or a high-water mark — NEVER a lower number. Staleness is flagged in UI.
-- [ ] **FOOD-12**: Protected food floor renders as a locked, rent-like line in every budget view; UI offers no path to edit it downward, no "cut spending" suggestion that touches it
-- [ ] **FOOD-13**: Food floor seed value is ~$550/mo, editable upward, with a `lastRefinedFromReceipts` timestamp visible to the user
+- [x] **FOOD-12**: Protected food floor renders as a locked, rent-like line in every budget view; UI offers no path to edit it downward, no "cut spending" suggestion that touches it
+- [x] **FOOD-13**: Food floor seed value is ~$550/mo, editable upward, with a `lastRefinedFromReceipts` timestamp visible to the user
 
 ### Surplus Router
 
@@ -179,18 +179,18 @@ Populated by `gsd-roadmapper` 2026-05-27.
 | UI-04 | Phase 3 | Complete |
 | EDGE-06 | Phase 3 | Complete |
 | FOOD-01 | Phase 4 | Pending |
-| FOOD-02 | Phase 4 | Pending |
+| FOOD-02 | Phase 4 | Complete |
 | FOOD-03 | Phase 4 | Pending |
-| FOOD-04 | Phase 4 | Pending |
-| FOOD-05 | Phase 4 | Pending |
+| FOOD-04 | Phase 4 | Complete |
+| FOOD-05 | Phase 4 | Complete |
 | FOOD-06 | Phase 4 | Pending |
 | FOOD-07 | Phase 4 | Pending |
 | FOOD-08 | Phase 4 | Pending |
 | FOOD-09 | Phase 4 | Pending |
-| FOOD-10 | Phase 4 | Pending |
+| FOOD-10 | Phase 4 | Complete |
 | FOOD-11 | Phase 4 | Pending |
-| FOOD-12 | Phase 4 | Pending |
-| FOOD-13 | Phase 4 | Pending |
+| FOOD-12 | Phase 4 | Complete |
+| FOOD-13 | Phase 4 | Complete |
 | UI-02 | Phase 4 | Pending |
 | EDGE-02 | Phase 4 | Pending |
 | EDGE-03 | Phase 4 | Pending |

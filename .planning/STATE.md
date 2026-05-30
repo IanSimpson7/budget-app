@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Phase 4 UI-SPEC approved
-last_updated: "2026-05-30T02:41:35.493Z"
+last_updated: "2026-05-30T10:51:00.858Z"
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 16
-  completed_plans: 11
-  percent: 69
+  completed_plans: 12
+  percent: 75
 ---
 
 # State: Budget App
@@ -36,11 +36,13 @@ progress:
 
 ## Current Position
 
+Phase: 04 (food-contract-locked-floor) — EXECUTING
+Plan: 2 of 5
 **Phase:** 4 (food-contract-locked-floor)
-**Plan:** Not started
-**Status:** Ready to execute
-**Progress:** ████░░░░░░ 60% (3/5 phases complete)
-**Last completed:** Phase 3 — expense-model-sinking-funds (3/3 plans, UAT passed 2026-05-29)
+**Plan:** 2 (04-01 complete)
+**Status:** Executing Phase 04
+**Progress:** [████████░░] 75%
+**Last completed:** Phase 4 Plan 1 — food storage foundation (schema v4, mealDefinitions table, food types, CRUD, singletons, seed, C1 lock)
 
 ---
 
@@ -57,6 +59,7 @@ progress:
 | Phase 03 P01 | 40m | 3 tasks | 13 files |
 | Phase 03 P02 | 7m | 3 tasks | 10 files |
 | Phase 03 P03 | 286s | 2 tasks | 5 files |
+| Phase 04-food-contract-locked-floor P01 | 449 | 2 tasks | 9 files |
 
 ## Quick Tasks Completed
 
@@ -120,6 +123,14 @@ Verified against `../schedule-meal-coordinator/plans/*.md` (5 live files). Spec 
 - Pages source = "GitHub Actions" (artifact flow), not a gh-pages branch. All actions are official GitHub-owned, pinned to MAJOR tags (T-01-13).
 - Live URL: https://iansimpson7.github.io/budget-app/ — phone-verified by Ian.
 
+### Key Decisions (added 04-01)
+
+- **mealDefinitions optional in SchemaV1Data** — avoids breaking all existing tests that construct v1-v3 data without the field; migrate_3_to_4 nullish-coalesces to [].
+- **I-07 resolved**: "PB" normalized to "peanut butter" in seed meal ingredients; other potential synonyms left unmapped (expected gap-list noise, fallback-high covers C1).
+- **Qdoba bowl seeds with flatCost unset** → triggers fallback-high gap flag (D-04) until Ian sets via /food/config.
+- **SEED_UNIT_COST_MAP seeds 3 macro-bearing entries** (bulk whey, 90/10 ground beef, chicken breast); satisfies I-04/EXP-07 handoff for whey-bearing meals pricing immediately.
+- **FlavorLine persisted at seed time** ({amount:50}); getFlavorLine() returns the persisted seed, not the code default, after first seed run.
+
 ### Deferred (v1 → v2)
 
 - OCR-01, OCR-02 (screenshot OCR ingestion + itemized receipt parser) — architect storage seam in v1, defer implementation
@@ -146,12 +157,12 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-30T01:03:04.225Z
+**Last session:** 2026-05-30T10:51:00.850Z
 
-**Stopped at:** Phase 4 UI-SPEC approved
+**Stopped at:** Phase 4 Plan 1 complete — food storage foundation (schema v4, CRUD, singletons, seed, C1 lock)
 
-**Next session action:** Start Phase 4 (Food Contract — Locked Floor) — `/clear` then `/gsd-discuss-phase 4`. PLAN-FORMAT-CONFIRM is now RESOLVED — read the "SMC plan format — confirmed" block above before planning; it changes the parser scope (date-range filenames, no SMC pricing → app's own unit-cost map, prose ingredient tokenization, fallback-high unpriced guard, non-decomposable meals like "Qdoba bowl"). Phase 4 must respect C1: food floor structurally non-editable downward; `settings['foodFloor']` singleton guarded. NOTE: GitHub Actions tag bump is DONE (2026-05-30, quick task 260530-81h); the 2026-06-01 scheduled agent was cancelled.
+**Next session action:** Continue Phase 4 with Plan 2 (`/gsd-execute-phase 4`). Plan 04-01 is complete: schema v4 live with mealDefinitions table, food.types.ts contracts, all storage methods, 14 seeded meals, unit-cost map seeded (bulk whey/ground beef/chicken), C1 lock proven by V6 absence tests. Plans 02–05 build the parser, cost engine, config surface, and food panel UI on top of this foundation.
 
 ---
 
-*Last updated: 2026-05-29*
+*Last updated: 2026-05-30*
