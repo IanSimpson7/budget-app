@@ -2,24 +2,35 @@
 // Pure function tests: (filename, raw) → ParsedPlan | null
 // Fixtures are hermetic snapshots — never reads live ../schedule-meal-coordinator/ files.
 import { describe, it, expect } from 'vitest'
-import { readFileSync } from 'fs'
-import { join } from 'path'
 import { parsePlanFile, tokenizeMealName } from './planParser'
 import type { ParsedPlan } from './planParser'
 
 // ── Fixture loader ────────────────────────────────────────────────────────────
-// Loads hermetic SMC plan snapshots from __fixtures__/ relative to this file.
-// Tests are deterministic regardless of whether live SMC files exist.
-const fixtureDir = join(__dirname, '__fixtures__')
+// Load hermetic SMC plan snapshots via Vite's ?raw import (consistent with
+// how food.atoms.ts loads plan files via import.meta.glob at build time).
+// Using static imports ensures Vite bundles them and tsc sees type-correct strings.
+import raw2026_05_18 from './__fixtures__/2026-05-18.md?raw'
+import raw2026_05_19 from './__fixtures__/2026-05-19.md?raw'
+import raw2026_05_21 from './__fixtures__/2026-05-21.md?raw'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore — double-dash filename; TS module resolution is fine for ?raw imports
+import raw2026_05_25__28 from './__fixtures__/2026-05-25--2026-05-28.md?raw'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore — double-dash filename
+import raw2026_05_29__31 from './__fixtures__/2026-05-29--2026-05-31.md?raw'
 
-function loadFixture(filename: string): string {
-  return readFileSync(join(fixtureDir, filename), 'utf-8')
+const FIXTURES: Record<string, string> = {
+  '2026-05-18.md': raw2026_05_18 as string,
+  '2026-05-19.md': raw2026_05_19 as string,
+  '2026-05-21.md': raw2026_05_21 as string,
+  '2026-05-25--2026-05-28.md': raw2026_05_25__28 as string,
+  '2026-05-29--2026-05-31.md': raw2026_05_29__31 as string,
 }
 
 // ── V1: Batch fixture (table body format) ────────────────────────────────────
 describe('parsePlanFile — V1 batch fixture (table body format)', () => {
   const filename = '2026-05-25--2026-05-28.md'
-  const raw = loadFixture(filename)
+  const raw = FIXTURES[filename]!
 
   it('returns a non-null ParsedPlan', () => {
     const result = parsePlanFile(filename, raw)
@@ -65,7 +76,7 @@ describe('parsePlanFile — V1 batch fixture (table body format)', () => {
 // ── V1: Single-day fixture 2026-05-21 (Food: prose format) ───────────────────
 describe('parsePlanFile — V1 single-day fixture 2026-05-21 (Food: prose format)', () => {
   const filename = '2026-05-21.md'
-  const raw = loadFixture(filename)
+  const raw = FIXTURES[filename]!
 
   it('returns a non-null ParsedPlan', () => {
     const result = parsePlanFile(filename, raw)
@@ -96,7 +107,7 @@ describe('parsePlanFile — V1 single-day fixture 2026-05-21 (Food: prose format
 // ── V1: Single-day fixture 2026-05-18 ────────────────────────────────────────
 describe('parsePlanFile — V1 single-day fixture 2026-05-18', () => {
   const filename = '2026-05-18.md'
-  const raw = loadFixture(filename)
+  const raw = FIXTURES[filename]!
 
   it('returns windowStart === windowEnd === 2026-05-18', () => {
     const result = parsePlanFile(filename, raw) as ParsedPlan
@@ -123,7 +134,7 @@ describe('parsePlanFile — V1 single-day fixture 2026-05-18', () => {
 // ── V1: Single-day fixture 2026-05-19 ────────────────────────────────────────
 describe('parsePlanFile — V1 single-day fixture 2026-05-19', () => {
   const filename = '2026-05-19.md'
-  const raw = loadFixture(filename)
+  const raw = FIXTURES[filename]!
 
   it('returns windowStart === windowEnd === 2026-05-19', () => {
     const result = parsePlanFile(filename, raw) as ParsedPlan
@@ -142,7 +153,7 @@ describe('parsePlanFile — V1 single-day fixture 2026-05-19', () => {
 // ── V1: Batch file 2026-05-29--2026-05-31 (Food: prose format) ───────────────
 describe('parsePlanFile — V1 batch 2026-05-29--2026-05-31 (Food: prose format)', () => {
   const filename = '2026-05-29--2026-05-31.md'
-  const raw = loadFixture(filename)
+  const raw = FIXTURES[filename]!
 
   it('extracts windowStart = 2026-05-29', () => {
     const result = parsePlanFile(filename, raw) as ParsedPlan
@@ -188,18 +199,11 @@ describe('parsePlanFile — V1 corpus: all 14 meals across 5 fixtures', () => {
     'turkey sandwich with cheese and green beans',
   ]
 
-  const allFixtures = [
-    '2026-05-18.md',
-    '2026-05-19.md',
-    '2026-05-21.md',
-    '2026-05-25--2026-05-28.md',
-    '2026-05-29--2026-05-31.md',
-  ]
+  const allFixtureEntries = Object.entries(FIXTURES) as [string, string][]
 
   function collectAllMeals(): Set<string> {
     const all = new Set<string>()
-    for (const filename of allFixtures) {
-      const raw = loadFixture(filename)
+    for (const [filename, raw] of allFixtureEntries) {
       const result = parsePlanFile(filename, raw)
       if (result) {
         for (const m of result.meals) all.add(m)
@@ -214,15 +218,14 @@ describe('parsePlanFile — V1 corpus: all 14 meals across 5 fixtures', () => {
     expect(missing, `Missing meals: ${missing.join(', ')}`).toHaveLength(0)
   })
 
-  it('total slot count matches expected 26 (5+6+5+24+16)', () => {
+  it('total slot count matches expected 55 (5+5+5+24+16)', () => {
     // 2026-05-18: 5 slots
     // 2026-05-19: 5 food slots (slot 3 is lift, no Food:)
     // 2026-05-21: 5 slots
     // 2026-05-25--2026-05-28: 4 days × 6 slots = 24 slots
-    // 2026-05-29--2026-05-31: 3 days × 5-6 slots = 16 food slots
+    // 2026-05-29--2026-05-31: 3 days → 6+5+5 = 16 food slots
     let total = 0
-    for (const filename of allFixtures) {
-      const raw = loadFixture(filename)
+    for (const [filename, raw] of allFixtureEntries) {
       const result = parsePlanFile(filename, raw)
       if (result) total += result.meals.length
     }
