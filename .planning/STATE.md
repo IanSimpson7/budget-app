@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 4 Plan 4 complete — food atom chain wired, survivalFloorAtom swapped to computed food floor (V7), README V8
-last_updated: "2026-05-30T12:00:00.000Z"
+stopped_at: Phase 4 Plan 6 complete — gap closure b/c/d: kind-aware fallback ceiling, solvencyFloor, survivalFloorAtom V8 wire
+last_updated: "2026-05-30T14:46:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 16
-  completed_plans: 18
+  completed_plans: 19
   percent: 97
 ---
 
@@ -42,7 +42,7 @@ Plan: 5 of 5
 **Plan:** 5 (04-04 complete; 04-05 next)
 **Status:** Executing Phase 04
 **Progress:** [████████░░] 97%
-**Last completed:** Phase 4 Plan 4 — food atom chain (glob loader, liveQuery, foodFloorAtom, survivalFloorAtom integration, V8 README)
+**Last completed:** Phase 4 Plan 6 — gap closure (b) kind-aware fallback, (c) solvencyFloor decoupling, (d) overlap guard, V8 wire
 
 ---
 
@@ -126,6 +126,14 @@ Verified against `../schedule-meal-coordinator/plans/*.md` (5 live files). Spec 
 - Pages source = "GitHub Actions" (artifact flow), not a gh-pages branch. All actions are official GitHub-owned, pinned to MAJOR tags (T-01-13).
 - Live URL: https://iansimpson7.github.io/budget-app/ — phone-verified by Ian.
 
+### Key Decisions (added 04-06)
+
+- **FALLBACK_CEILING_SNACK = 5**: snack/shake occasions get a $5 conservative-high ceiling; full meals stay at $15 (FALLBACK_CEILING_MEAL). FALLBACK_CEILING_PER_MEAL kept as @deprecated alias.
+- **classifyMealKind**: fallback-only heuristic (6 snack keywords); exact pricing supersedes it; conservative default = 'meal'.
+- **solvencyFloor vs floor**: `FoodFloorResult.floor` is C1-guarded display value (conservative-high); `solvencyFloor` is the realistic estimate for solvency math. Gapped-live solvencyFloor = max(lastComputedFloor, allTimeHighWater, DEFAULT_FOOD_FLOOR_SEED).
+- **V8 wire**: `survivalFloorAtom` now reads `solvencyFloor` not `floor` — unconfigured cost map cannot inflate solvency.
+- **Most-specific-plan selection**: single narrowest-window plan selected when multiple current plans overlap today; prevents meal double-counting.
+
 ### Key Decisions (added 04-04)
 
 - **glob syntax**: `query: '?raw', import: 'default'` (Vite 5+ form; `as: 'raw'` is deprecated).
@@ -168,9 +176,9 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-30T10:51:00.850Z
+**Last session:** 2026-05-30T14:46:00Z
 
-**Stopped at:** Phase 4 Plan 1 complete — food storage foundation (schema v4, CRUD, singletons, seed, C1 lock)
+**Stopped at:** Phase 4 Plan 6 complete — gap closure b/c/d (solvencyFloor, FALLBACK_CEILING_SNACK, classifyMealKind, overlap guard, V8 wire)
 
 **Next session action:** Continue Phase 4 with Plan 2 (`/gsd-execute-phase 4`). Plan 04-01 is complete: schema v4 live with mealDefinitions table, food.types.ts contracts, all storage methods, 14 seeded meals, unit-cost map seeded (bulk whey/ground beef/chicken), C1 lock proven by V6 absence tests. Plans 02–05 build the parser, cost engine, config surface, and food panel UI on top of this foundation.
 

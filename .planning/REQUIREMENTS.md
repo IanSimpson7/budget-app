@@ -91,7 +91,7 @@ Every requirement below is consistent with C1–C3. Any future requirement that 
 
 - [x] **EDGE-01**: Income below passive floor or below defended line surfaces solvency warning / backfill alert; never silently absorbed — satisfied by Phase 2
 - [x] **EDGE-02**: No current meal plan → food floor fallback-high with staleness flag (FOOD-11)
-- [ ] **EDGE-03**: Pool gains a new ingredient with no unit cost → unpriced-ingredient flag (FOOD-08)
+- [x] **EDGE-03**: Pool gains a new ingredient with no unit cost → unpriced-ingredient flag (FOOD-08)
 - [ ] **EDGE-04**: EF withdrawal → recompute targets, re-prioritize (SURP-09)
 - [x] **EDGE-05**: 3rd check in a month → classified as surplus (INC-04) — satisfied by Phase 2
 - [x] **EDGE-06**: Annual sinking-fund cost due → covered by accrued balance, not a shock (EXP-06)
@@ -193,7 +193,7 @@ Populated by `gsd-roadmapper` 2026-05-27.
 | FOOD-13 | Phase 4 | Complete |
 | UI-02 | Phase 4 | Pending |
 | EDGE-02 | Phase 4 | Complete |
-| EDGE-03 | Phase 4 | Pending |
+| EDGE-03 | Phase 4 | Complete |
 | SURP-01 | Phase 5 | Pending |
 | SURP-02 | Phase 5 | Pending |
 | SURP-03 | Phase 5 | Pending |
