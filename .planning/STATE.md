@@ -63,6 +63,7 @@ progress:
 | Date | Task | Commit |
 |------|------|--------|
 | 2026-05-28 | dev server auto-opens in OS default browser (`server.open: true`) | `55fb07b` |
+| 2026-05-30 | Bump Pages action tags to Node 24 majors (checkout/setup-node/configure-pages v6, upload-pages-artifact/deploy-pages v5) | `ffcde28` |
 
 ---
 
@@ -131,7 +132,7 @@ None.
 
 ### Dated Follow-ups
 
-- **[ACT BEFORE 2026-06-02] Bump GitHub Actions major-version tags.** `deploy.yml` uses `@v4`/`@v3` actions running on Node 20; GitHub force-migrates runners to Node 24 on 2026-06-02. Bump checkout/setup-node/configure-pages/upload-pages-artifact/deploy-pages to latest majors before then. (Also in 01-03-SUMMARY.md and phase deferred-items.md.)
+- ✅ **[DONE 2026-05-30] Bump GitHub Actions major-version tags.** `deploy.yml` bumped to Node 24-ready majors (checkout/setup-node/configure-pages v6, upload-pages-artifact/deploy-pages v5) ahead of the 2026-06-02 forced runner migration. Quick task `260530-81h`, commit `ffcde28`. The armed scheduled agent (2026-06-01) is now redundant — cancel it.
 
 ### Provisional values to converge during build (per spec §12)
 
