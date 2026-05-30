@@ -16,7 +16,6 @@ import {
 } from './costEngine'
 import type {
   CostEngineInput,
-  CostEngineResult,
   FloorGap,
 } from './costEngine'
 import type { MealDefinition, UnitCostEntry, PortionEntry, FoodFloorMeta } from './food.types'
@@ -36,6 +35,7 @@ const CHICKEN_DEF: MealDefinition = {
 const QDOBA_DEF: MealDefinition = {
   mealName: 'qdoba bowl',
   type: 'flat-cost',
+  ingredients: [],  // flat-cost meals carry no ingredient list
   flatCost: 11,
 }
 
@@ -43,6 +43,7 @@ const QDOBA_DEF: MealDefinition = {
 const FLAT_NO_COST_DEF: MealDefinition = {
   mealName: 'mystery flat meal',
   type: 'flat-cost',
+  ingredients: [],  // flat-cost meals carry no ingredient list
   // flatCost deliberately omitted
 }
 
