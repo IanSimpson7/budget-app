@@ -37,12 +37,19 @@ describe('storage abstraction (FOUND-02)', () => {
     expect(s.moveMoney).toBeUndefined()
     expect(s.executeSweep).toBeUndefined()
     expect(s.decreaseFoodFloor).toBeUndefined()
+    // Phase 4 / V6: C1 structural lock — no downward-write path on food floor
+    expect(s.setFoodFloor).toBeUndefined()
+    expect(s.decreaseFoodFloor).toBeUndefined()
 
     // TypeScript-level enforcement: the property does not exist on the typed surface.
     // @ts-expect-error — saveCredentials is structurally absent from storage (C2)
     storage.saveCredentials
     // @ts-expect-error — moveMoney is structurally absent from storage (C3)
     storage.moveMoney
+    // @ts-expect-error — setFoodFloor is structurally absent from storage (C1/V6)
+    storage.setFoodFloor
+    // @ts-expect-error — decreaseFoodFloor is structurally absent from storage (C1/V6)
+    storage.decreaseFoodFloor
   })
 })
 
@@ -50,7 +57,7 @@ describe('export envelope (FOUND-03)', () => {
   it('exportAll returns envelope with schemaVersion === CURRENT_SCHEMA_VERSION and a parseable ISO exportedAt', async () => {
     const envelope = await storage.exportAll()
     expect(envelope.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
-    expect(envelope.schemaVersion).toBe(3)
+    expect(envelope.schemaVersion).toBe(4)
     expect(typeof envelope.exportedAt).toBe('string')
     expect(Number.isNaN(Date.parse(envelope.exportedAt))).toBe(false)
     expect(typeof envelope.appVersion).toBe('string')
@@ -79,6 +86,7 @@ describe('import path (FOUND-04)', () => {
         incomeChecks: [],
         expenseItems: [],
         sinkingFunds: [],
+        mealDefinitions: [],
         accounts: [],
         settings: { floors: { passive: 2700, defended: 3150, foodSeed: 700 } as Floors },
       },
