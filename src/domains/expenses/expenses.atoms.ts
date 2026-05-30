@@ -3,9 +3,19 @@
 // Source atom: atomWithObservable over storage.observeExpenseItems().
 //   initialValue:[] prevents Suspense (Pitfall 1 / React 19 re-suspension bug).
 //
-// survivalFloorAtom: the headline output of Phase 3, updated in Phase 4 (04-04).
-//   survival_floor = fixed_ex_food + Σ(sinking-fund monthlyAccruals) + foodFloorAtom.floor
-//   Phase 4 replaces floors.foodSeed with the live/reactive food floor (V7).
+// survivalFloorAtom: the headline output of Phase 3, updated in Phase 4 (04-04, 04-06).
+//   survival_floor = fixed_ex_food + Σ(sinking-fund monthlyAccruals) + foodFloorAtom.solvencyFloor
+//   Phase 4 (04-04): floors.foodSeed replaced by the live/reactive food floor (V7).
+//   Phase 4 (04-06): switched from foodFloorAtom.floor to foodFloorAtom.solvencyFloor (V8).
+//     Rationale: the displayed floor (FoodFloorResult.floor) is conservatively inflated when any
+//     meal falls back to the ceiling ($15 or $5). With only 3 of ~15 ingredients seeded, all
+//     16 slots hit the ceiling → floor ≈ $2,480, pushing survivalFloor to $4,265 — a solvency
+//     number hostage to an unconfigured cost map. solvencyFloor is the REALISTIC food estimate:
+//       gapped-live: max(lastComputedFloor, allTimeHighWater, DEFAULT_FOOD_FLOOR_SEED)
+//       clean-live:  equals floor (real computed value)
+//       stale:       equals floor (already realistic)
+//     Understating food in solvency is the clinically-safe direction; overstating it breaks
+//     the dashboard. /food still displays the conservative-high floor (C1 unchanged).
 //   Import direction: expenses → food (one-way; food never imports expenses — Pitfall 4).
 //   Async because foodFloorAtom is async (IDB + glob load on first access).
 //   NEVER stored (FOUND-06) — always derived from source atoms.
@@ -48,10 +58,14 @@ const fixedExFoodAtom = atom((get): number =>
   ),
 )
 
-// ── survivalFloorAtom (EXP-03, D-08, V7) ─────────────────────────────────────
-// survival_floor = fixed_ex_food + Σ(monthlyAccruals) + foodFloorAtom.floor
+// ── survivalFloorAtom (EXP-03, D-08, V8) ─────────────────────────────────────
+// survival_floor = fixed_ex_food + Σ(monthlyAccruals) + foodFloorAtom.solvencyFloor
 //
-// Phase 4 (04-04): floors.foodSeed is replaced by the computed food floor (V7).
+// Phase 4 (04-04): floors.foodSeed replaced by the computed food floor (V7).
+// Phase 4 (04-06): switched to solvencyFloor instead of floor (V8).
+//   solvencyFloor is the REALISTIC food estimate — never the fallback-inflated
+//   displayed floor. An unconfigured cost map cannot inflate solvency.
+//   /food still displays the conservative-high floor (C1 unchanged).
 // foodFloorAtom is async (glob load + IDB reads on first access).
 //
 // Import direction: food.atoms → this file (expenses → food, never reverse).
@@ -64,10 +78,10 @@ const fixedExFoodAtom = atom((get): number =>
 // Pitfall 3: wrap in <Suspense> in any component that reads this atom.
 
 export const survivalFloorAtom = atom(async (get): Promise<number> => {
-  const { floor } = await get(foodFloorAtom)   // computed food floor replaces floors.foodSeed (V7)
+  const { solvencyFloor } = await get(foodFloorAtom)   // REALISTIC food estimate (V8); displayed floor unchanged
   const fixedExFood = get(fixedExFoodAtom)
   const accruals = get(sinkingFundAccrualsAtom)
-  return fixedExFood + accruals + floor
+  return fixedExFood + accruals + solvencyFloor
 })
 
 // ── Write atoms ────────────────────────────────────────────────────────────────
