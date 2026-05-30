@@ -18,6 +18,24 @@
 //   saveFoodFloorMeta with Math.max(prev, floor) for allTimeHighWater.
 //   NEVER writes back on a gapped result or the stale path.
 //
+// FoodFloorResult.floor vs FoodFloorResult.solvencyFloor (04-06 c):
+//   floor:         The DISPLAYED protected floor. C1 governs this — always conservative-high.
+//                  On a gapped live result, floor is the fallback-inflated computed value.
+//                  NEVER display less than floor — this is the clinical C1 contract.
+//   solvencyFloor: The number survivalFloorAtom consumes. Realistic, never fallback-high.
+//                  Gapped-live: max(lastComputedFloor, allTimeHighWater, DEFAULT_FOOD_FLOOR_SEED).
+//                  Clean-live:  equals floor (real computed value, no inflation).
+//                  Stale:       equals floor (stale floor is already realistic by construction).
+//                  Understating food in solvency is the clinically-safe direction;
+//                  overstating (what the fallback-inflated floor does) breaks the dashboard.
+//
+// Overlap guard (04-06 d):
+//   When >1 current plans cover today, ONE is selected (narrowest window span; tie-break:
+//   latest windowStart; final tie-break: last in array). The selected plan's meals and its
+//   own day-span are used as scheduledMeals / windowDays. Previously the code flat-mapped
+//   all current plans and unioned their day-sets — correct for non-overlapping plans but
+//   double-counts meals and inflates windowDays when windows overlap on today.
+//
 // foodBadgeStatusAtom: 'clean' | 'needs-attention' derived from foodFloorAtom.gaps.
 //
 // C1 / Import boundary: this file imports storage ONLY (never db, never liveQuery from dexie).
@@ -83,7 +101,16 @@ if (import.meta.env.DEV) {
 // ── FoodFloorResult (exported — Plan 05 UI consumes this) ─────────────────────
 
 export interface FoodFloorResult {
+  /** C1-CRITICAL: DISPLAYED protected floor. Always conservative-high. Never lower this. */
   floor: number
+  /**
+   * SOLVENCY floor consumed by survivalFloorAtom. Realistic, never fallback-inflated.
+   * - Clean-live:  equals floor (no gap; real computed value).
+   * - Gapped-live: max(lastComputedFloor, allTimeHighWater, DEFAULT_FOOD_FLOOR_SEED).
+   * - Stale:       equals floor (stale floor already realistic by construction).
+   * See food.atoms.ts header comment for the clinical rationale.
+   */
+  solvencyFloor: number
   gaps: FloorGap[]
   isClean: boolean
   planIsCurrent: boolean
@@ -204,27 +231,42 @@ export const foodFloorAtom = atom(async (get): Promise<FoodFloorResult> => {
     const stalePlanGap: FloorGap = { type: 'stale-plan', lastKnownDate }
     return {
       floor,
+      // Stale floor is already realistic (max(last, highWater) or seed) — solvencyFloor equals floor.
+      solvencyFloor: floor,
       gaps: [stalePlanGap],
       isClean: false,
       planIsCurrent: false,
     }
   }
 
-  // Live path: collect all meals from current plans (flattened)
-  const scheduledMeals = currentPlans.flatMap((p) => p.meals)
-
-  // Compute the number of distinct days covered by current plans
-  // (each plan's window may span multiple days; we collect the union)
-  const coveredDays = new Set<string>()
-  for (const p of currentPlans) {
-    let d = new Date(p.windowStart + 'T12:00:00Z')
-    const end = new Date(p.windowEnd + 'T12:00:00Z')
-    while (d <= end) {
-      coveredDays.add(d.toISOString().slice(0, 10))
-      d = new Date(d.getTime() + 86400000)
-    }
+  // (04-06 d) Overlap double-count guard: when multiple current plans cover today,
+  // select ONE — the most-specific (narrowest window span). Previously flat-mapping
+  // all current plans would double-count meals when windows overlap on today.
+  //
+  // Selection: smallest (windowEnd − windowStart) span in days wins.
+  // Tie-break 1: latest windowStart.
+  // Tie-break 2: last position in the array (reduce keeps final tie).
+  //
+  // Single-plan case: trivially returns the only plan — no behavior regression.
+  function planDaySpan(p: { windowStart: string; windowEnd: string }): number {
+    const start = new Date(p.windowStart + 'T12:00:00Z')
+    const end   = new Date(p.windowEnd   + 'T12:00:00Z')
+    return Math.round((end.getTime() - start.getTime()) / 86400000) + 1
   }
-  const windowDays = Math.max(coveredDays.size, 1)
+
+  const selectedPlan = currentPlans.reduce((best, cur) => {
+    const bestSpan = planDaySpan(best)
+    const curSpan  = planDaySpan(cur)
+    if (curSpan < bestSpan) return cur
+    if (curSpan > bestSpan) return best
+    // Tie-break: latest windowStart (more recent plan is more specific)
+    if (cur.windowStart > best.windowStart) return cur
+    // Final tie-break: last in array (keep cur, which is "later")
+    return cur
+  })
+
+  const scheduledMeals = selectedPlan.meals
+  const windowDays = Math.max(planDaySpan(selectedPlan), 1)
 
   const result = computeFloor({
     scheduledMeals,
@@ -234,6 +276,19 @@ export const foodFloorAtom = atom(async (get): Promise<FoodFloorResult> => {
     daysInMonth,
     windowDays,
   })
+
+  // (04-06 c) solvencyFloor: realistic food estimate for survivalFloorAtom.
+  // Clean: equals floor (real computed value).
+  // Gapped: max(lastComputedFloor, allTimeHighWater, DEFAULT_FOOD_FLOOR_SEED) — NOT the
+  //   fallback-inflated floor. lastComputedFloor/allTimeHighWater are written ONLY on
+  //   clean results (I-03) so they are realistic, never fallback-inflated.
+  let solvencyFloor: number
+  if (result.isClean) {
+    solvencyFloor = result.floor
+  } else {
+    const rawRealistic = Math.max(meta.lastComputedFloor ?? 0, meta.allTimeHighWater ?? 0)
+    solvencyFloor = rawRealistic > 0 ? rawRealistic : DEFAULT_FOOD_FLOOR_SEED
+  }
 
   // I-03 WRITE-BACK: persist metadata ONLY on a clean (gap-free) result.
   // High-water uses Math.max — never decreases (C1 invariant).
@@ -252,6 +307,7 @@ export const foodFloorAtom = atom(async (get): Promise<FoodFloorResult> => {
 
   return {
     floor: result.floor,
+    solvencyFloor,
     gaps: result.gaps,
     isClean: result.isClean,
     planIsCurrent: true,
