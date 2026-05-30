@@ -133,7 +133,7 @@ None.
 
 ### Dated Follow-ups
 
-- ✅ **[DONE 2026-05-30] Bump GitHub Actions major-version tags.** `deploy.yml` bumped to Node 24-ready majors (checkout/setup-node/configure-pages v6, upload-pages-artifact/deploy-pages v5) ahead of the 2026-06-02 forced runner migration. Quick task `260530-81h`, commit `ffcde28`. The armed scheduled agent (2026-06-01) is now redundant — cancel it.
+- ✅ **[DONE 2026-05-30] Bump GitHub Actions major-version tags.** `deploy.yml` bumped to Node 24-ready majors (checkout/setup-node/configure-pages v6, upload-pages-artifact/deploy-pages v5) ahead of the 2026-06-02 forced runner migration. Quick task `260530-81h`, commit `ffcde28`. The armed scheduled agent (2026-06-01) was cancelled by Ian on 2026-05-30 (no longer needed).
 
 ### Provisional values to converge during build (per spec §12)
 
@@ -150,7 +150,7 @@ None.
 
 **Stopped at:** Phase 4 UI-SPEC approved
 
-**Next session action:** Start Phase 4 (Food Contract — Locked Floor) — `/clear` then `/gsd-discuss-phase 4`. PLAN-FORMAT-CONFIRM is now RESOLVED — read the "SMC plan format — confirmed" block above before planning; it changes the parser scope (date-range filenames, no SMC pricing → app's own unit-cost map, prose ingredient tokenization, fallback-high unpriced guard, non-decomposable meals like "Qdoba bowl"). Phase 4 must respect C1: food floor structurally non-editable downward; `settings['foodFloor']` singleton guarded. NOTE dated follow-up: bump GitHub Actions tags before 2026-06-02 (armed scheduled agent runs 2026-06-01).
+**Next session action:** Start Phase 4 (Food Contract — Locked Floor) — `/clear` then `/gsd-discuss-phase 4`. PLAN-FORMAT-CONFIRM is now RESOLVED — read the "SMC plan format — confirmed" block above before planning; it changes the parser scope (date-range filenames, no SMC pricing → app's own unit-cost map, prose ingredient tokenization, fallback-high unpriced guard, non-decomposable meals like "Qdoba bowl"). Phase 4 must respect C1: food floor structurally non-editable downward; `settings['foodFloor']` singleton guarded. NOTE: GitHub Actions tag bump is DONE (2026-05-30, quick task 260530-81h); the 2026-06-01 scheduled agent was cancelled.
 
 ---
 
