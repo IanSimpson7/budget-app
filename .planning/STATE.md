@@ -64,6 +64,7 @@ progress:
 |------|------|--------|
 | 2026-05-28 | dev server auto-opens in OS default browser (`server.open: true`) | `55fb07b` |
 | 2026-05-30 | Bump Pages action tags to Node 24 majors (checkout/setup-node/configure-pages v6, upload-pages-artifact/deploy-pages v5) | `ffcde28` |
+| 2026-05-30 | Fix ICU-dependent IncomeBar `$3k` label + bump `.nvmrc` 20→24 (surfaced by first deploy since Phase 1; Node 20 EOL) — deploy green | `0010216` |
 
 ---
 
