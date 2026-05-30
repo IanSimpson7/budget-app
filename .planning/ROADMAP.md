@@ -98,13 +98,12 @@ Every phase's plans must structurally enforce these — not merely document them
   6. Flavor/condiment line displays as a separate fixed monthly amount (~$50/mo seed, editable), excluded from per-meal pricing, treated as PROTECTED
   7. Food panel shows the discretionary food layer (gateable) side-by-side with the protected floor (locked)
 **Plans:** 5 plans
-- [ ] 04-01-PLAN.md — Storage foundation: schema v3→v4 + mealDefinitions table + 4 food settings singletons + CRUD/seed/export round-trip + C1 absence-proofs + Wave-0 test scaffolds (V1–V8)
-- [ ] 04-02-PLAN.md — SMC plan parser vertical slice: parsePlanFile (both filename + both body formats) + Vite glob fs.allow + build-and-push/CI-fallback docs (V1, V8)
-- [ ] 04-03-PLAN.md — Cost engine + foodFloorAtom chain: Σ macro-bearing cost, fallback-high gaps, monthly derivation, stale max(last,high-water), survivalFloorAtom swap (V3–V7)
-- [ ] 04-04-PLAN.md — /food/config surface: three editable tables (meal/unit-cost/portion) + FOOD-13 timestamp + routes/nav (FOOD-04/05/08/13, EDGE-03)
-- [ ] 04-05-PLAN.md — /food locked-floor panel: read-only floor + Lock + flavor line + side-by-side gateable layer + status badge/gap list (FOOD-10/12, UI-02, EDGE-02)
-**Build note:** Confirm real `plans/<date>.md` format against a live sample BEFORE writing the parser (per spec §5g) — done in STATE.md "SMC plan format — confirmed"; Plan 04-02 re-confirms the single-day `**Food:**` branch against fixtures.
-**Scope re-map (D-01):** FOOD-02 satisfied by the app-owned meal-definition table, NOT a `meal_pool.md` (which does not exist). Parser reads SMC for scheduled meal NAMES + window only.
+- [ ] 04-01-PLAN.md — Storage foundation: schema v3→v4 + mealDefinitions table + 4 food settings singletons + CRUD/observers/seed/export round-trip + C1 absence-proofs (FOOD-02/04/05/10/12/13; V6)
+- [ ] 04-02-PLAN.md — SMC plan parser + 5 hermetic fixtures: parsePlanFile both filename + both body formats, 14-meal corpus, null-on-failure (FOOD-01/03; V1/V2)
+- [ ] 04-03-PLAN.md — Cost engine (pure): Σ macro-bearing cost, fallback-high on every gap, monthly derivation, never-lower stale path (FOOD-06/07/08/09, EDGE-02/03; V3/V4/V5)
+- [ ] 04-04-PLAN.md — food.atoms chain (glob loader + foodFloorAtom) + survivalFloorAtom integration + Vite fs.allow + CI-fallback README (FOOD-01/03/06/07/09/11, EDGE-02; V7/V8)
+- [ ] 04-05-PLAN.md — /food + /food/config surfaces: locked floor, status badge, flavor line, gateable join, 3 config tables + C1 6-condition human-verify checkpoint (FOOD-04/05/08/10/11/12/13, UI-02, EDGE-02/03)
+**Build note:** Plan format confirmed in STATE.md; FOOD-02 re-mapped to the app-owned meal table (D-01, no meal_pool.md).
 **UI hint:** yes
 
 ### Phase 5: Surplus Router + Unified Dashboard
