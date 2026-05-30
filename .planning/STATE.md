@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 4 Plan 6 complete — gap closure b/c/d: kind-aware fallback ceiling, solvencyFloor, survivalFloorAtom V8 wire
-last_updated: "2026-05-30T14:46:00.000Z"
+stopped_at: Phase 4 COMPLETE — food contract locked floor (6 plans incl. 04-06 gap fix); verified, checkpoint approved
+last_updated: "2026-05-30T15:05:00.000Z"
 progress:
   total_phases: 5
-  completed_phases: 3
-  total_plans: 16
-  completed_plans: 19
-  percent: 97
+  completed_phases: 4
+  total_plans: 17
+  completed_plans: 17
+  percent: 80
 ---
 
 # State: Budget App
@@ -36,13 +36,11 @@ progress:
 
 ## Current Position
 
-Phase: 04 (food-contract-locked-floor) — EXECUTING
-Plan: 5 of 5
-**Phase:** 4 (food-contract-locked-floor)
-**Plan:** 5 (04-04 complete; 04-05 next)
-**Status:** Executing Phase 04
-**Progress:** [████████░░] 97%
-**Last completed:** Phase 4 Plan 6 — gap closure (b) kind-aware fallback, (c) solvencyFloor decoupling, (d) overlap guard, V8 wire
+**Phase:** 5 (surplus-router-unified-dashboard) — NOT STARTED
+**Plan:** —
+**Status:** Phase 4 complete; ready to plan Phase 5 (final v1.0 phase)
+**Progress:** [████████░░] 80% (4/5 phases complete)
+**Last completed:** Phase 4 — food-contract-locked-floor (6 plans incl. 04-06 gap fix). Verified goal ACHIEVED (7/7 must-haves, 929 tests, tsc clean); C1 structurally enforced; human-verify checkpoint approved 2026-05-30.
 
 ---
 
@@ -168,7 +166,7 @@ None.
 ### Provisional values to converge during build (per spec §12)
 
 - Passive floor (~$2,400 → ~$2,900) — validate at August 2026 review against June–July checks
-- Food floor (~$550/mo) — converge from receipts
+- **Food floor (~$550/mo) — Ian is collecting a full week of data to set the lowest-possible floor; one full week lands Thu 2026-06-04.** Convergence path is now live: price the unit-cost map (Table B) + portion model (Table C) in `/food/config` so meals stop hitting the fallback ceiling. Once a *clean* (gap-free) computation occurs, `solvencyFloor` switches from the $550 seed to tracking the real computed floor automatically. (Floor is computed, never set downward — C1.)
 - Flavor line (~$50/mo) — refine from receipts
 - EF sweep (~$1,000) — confirm landed after ~May 29 payday
 
@@ -176,12 +174,14 @@ None.
 
 ## Session Continuity
 
-**Last session:** 2026-05-30T14:46:00Z
+**Last session:** 2026-05-30T15:05:00Z
 
-**Stopped at:** Phase 4 Plan 6 complete — gap closure b/c/d (solvencyFloor, FALLBACK_CEILING_SNACK, classifyMealKind, overlap guard, V8 wire)
+**Stopped at:** Phase 4 COMPLETE — food-contract-locked-floor (6 plans: 04-01 storage, 04-02 parser, 04-03 cost engine, 04-04 atom chain + survivalFloor V7, 04-05 UI surfaces, 04-06 gap fix b/c/d). Goal verified ACHIEVED; C1 enforced at every layer; human-verify checkpoint approved.
 
-**Next session action:** Continue Phase 4 with Plan 2 (`/gsd-execute-phase 4`). Plan 04-01 is complete: schema v4 live with mealDefinitions table, food.types.ts contracts, all storage methods, 14 seeded meals, unit-cost map seeded (bulk whey/ground beef/chicken), C1 lock proven by V6 absence tests. Plans 02–05 build the parser, cost engine, config surface, and food panel UI on top of this foundation.
+**Next session action:** Start Phase 5 — surplus-router-unified-dashboard (final v1.0 phase) — `/clear` then `/gsd-discuss-phase 5` (or `/gsd-plan-phase 5`). Phase 5 = EF-first surplus recommendation engine, gradual sweep, backfill-vs-sweep gate ($3,000 defended line for alerts; passive floor for solvency), phone-readable unified dashboard. Requirements SURP-01..09, UI-01, UI-06, EDGE-04. NOTE C3: dashboard recommends sweeps, never moves money. The survivalFloorAtom now consumes `solvencyFloor` (04-06) — Phase 5 surplus math should build on that realistic floor, not the displayed fallback-high `floor`.
+
+**Carry-forward:** Ian converging the real food floor from a week of data (one full week = Thu 2026-06-04); see Provisional values above. Residual `.claude/worktrees/agent-*` (wave 2) are locked by the live process — harness reclaims on session teardown; `.claude/worktrees/` is now gitignored.
 
 ---
 
-*Last updated: 2026-05-30*
+*Last updated: 2026-05-30 (Phase 4 COMPLETE — locked food floor, C1 enforced, solvency decoupled)*
