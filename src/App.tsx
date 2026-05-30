@@ -7,6 +7,8 @@ import EntryPage from './pages/EntryPage'
 import DashboardPage from './pages/DashboardPage'
 import ExpensesPage from './pages/ExpensesPage'
 import FundsPage from './pages/FundsPage'
+import FoodPage from './pages/FoodPage'
+import FoodConfigPage from './pages/FoodConfigPage'
 
 // HashRouter per D-15 — GitHub Pages has no server-side SPA redirect at
 // subpaths, so #-routing is the correct default for the deploy target.
@@ -28,6 +30,8 @@ export default function App() {
             <Route path="/entry" element={<EntryPage />} />
             <Route path="/expenses" element={<ExpensesPage />} />
             <Route path="/funds" element={<FundsPage />} />
+            <Route path="/food" element={<FoodPage />} />
+            <Route path="/food/config" element={<FoodConfigPage />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </Suspense>

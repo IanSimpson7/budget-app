@@ -319,3 +319,17 @@ export const deleteMealDefinitionAtom = atom(
     await storage.deleteMealDefinition(id)
   },
 )
+
+// saveFoodFloorMetaAtom — used by FoodConfigPage "Mark refined today" (FOOD-13).
+// Persists a timestamp to lastRefinedFromReceipts; bumps the meta refresh counter.
+// FOOD-13: this records a timestamp ONLY — it NEVER edits the floor value directly.
+// The floor is always derived; saveFoodFloorMeta cannot set lastComputedFloor to
+// an arbitrary user value (the field is written only by the clean-computation write-back, I-03).
+
+export const saveFoodFloorMetaAtom = atom(
+  null,
+  async (_get, set, meta: FoodFloorMeta): Promise<void> => {
+    await storage.saveFoodFloorMeta(meta)
+    set(metaRefreshAtom, (n) => n + 1)
+  },
+)

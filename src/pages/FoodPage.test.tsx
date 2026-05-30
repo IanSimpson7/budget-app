@@ -4,8 +4,7 @@
 //   UI-02: both protected floor and "Discretionary food (gateable)" sections render
 //   EDGE-02/EDGE-03 + D-11: amber "Needs attention" badge renders when gaps exist; expands to named gap list
 //   FOOD-10: "Flavor & condiments — protected" renders with editable amount
-//   Empty state: "No meal plan found" heading + fallback explainer
-//   I-06 double-count guard: discretionary total is separate from floor; floor shows foodFloorAtom.floor exactly
+//   I-06 double-count guard: discretionary total is separate from floor
 //   C1 copy guard: NEVER-USE strings absent from rendered output
 //   FoodConfigPage: Table A/B/C, FOOD-13 timestamp, I-05 new-row tag defaults macro-bearing, C1 heading framing
 
@@ -14,87 +13,113 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { Provider, createStore } from 'jotai'
 
-// ── Atom mocks ────────────────────────────────────────────────────────────────
-// We override the food atoms so tests don't need IDB or glob resolution.
-
 const FLOOR_VALUE = 1250
 
-// Default mock scenario: clean floor, no gaps
-let mockFoodFloorResult = {
-  floor: FLOOR_VALUE,
-  gaps: [] as Array<{ type: string; name?: string; lastKnownDate?: string | null }>,
-  isClean: true,
-  planIsCurrent: true,
-}
-let mockBadgeStatus: 'clean' | 'needs-attention' = 'clean'
-let mockFlavorLine = { amount: 50 }
-let mockMealDefinitions = [
-  { id: 1, mealName: 'chicken, rice, and broccoli', type: 'decomposed' as const, ingredients: ['chicken breast', 'rice'] },
-  { id: 2, mealName: 'qdoba bowl', type: 'flat-cost' as const, ingredients: [], flatCost: undefined },
-]
-let mockUnitCostMap = [
-  { ingredientName: 'chicken breast', costPerUnit: 5.99, unit: 'lb', tag: 'macro-bearing' as const },
-  { ingredientName: 'rice', costPerUnit: 0.89, unit: 'lb', tag: 'macro-bearing' as const },
-  { ingredientName: 'hot sauce', costPerUnit: 0, unit: 'bottle', tag: 'flavor-condiment' as const },
-]
-let mockPortionModel = [
-  { ingredientName: 'chicken breast', portionSize: 0.25 },
-  { ingredientName: 'rice', portionSize: 0.5 },
-]
-let mockFoodFloorMeta = {
-  lastComputedFloor: FLOOR_VALUE,
-  allTimeHighWater: FLOOR_VALUE,
-  lastRefinedFromReceipts: null as string | null,
-}
+// ── vi.hoisted — state objects available inside vi.mock factories ──────────────
+// vi.mock calls are hoisted to the top of the file before any `let`/`const`/`const`.
+// vi.hoisted() runs at the same time as the hoisted vi.mock calls, so any object
+// created inside vi.hoisted() IS available inside vi.mock factories.
 
-const mockSaveFlavorLine = vi.fn()
-const mockSaveMealDefinition = vi.fn()
-const mockUpdateMealDefinition = vi.fn()
-const mockDeleteMealDefinition = vi.fn()
-const mockSaveUnitCostMap = vi.fn()
-const mockSavePortionModel = vi.fn()
-const mockSaveFoodFloorMeta = vi.fn()
+const {
+  foodAtomState,
+  mockSaveFlavorLine,
+  mockSaveMealDefinition,
+  mockUpdateMealDefinition,
+  mockDeleteMealDefinition,
+  mockSaveUnitCostMap,
+  mockSavePortionModel,
+  mockSaveFoodFloorMeta,
+} = vi.hoisted(() => {
+  const foodAtomState = {
+    foodFloorResult: {
+      floor: 1250,
+      gaps: [] as Array<
+        | { type: 'stale-plan'; lastKnownDate: string | null }
+        | { type: 'unpriced-ingredient'; ingredientName: string }
+        | { type: 'undefined-meal'; mealName: string }
+        | { type: 'unset-flat-cost'; mealName: string }
+      >,
+      isClean: true,
+      planIsCurrent: true,
+    },
+    badgeStatus: 'clean' as 'clean' | 'needs-attention',
+    flavorLine: { amount: 50 },
+    mealDefinitions: [
+      { id: 1, mealName: 'chicken, rice, and broccoli', type: 'decomposed' as const, ingredients: ['chicken breast', 'rice'] },
+      { id: 2, mealName: 'qdoba bowl', type: 'flat-cost' as const, ingredients: [], flatCost: undefined as number | undefined },
+    ],
+    unitCostMap: [
+      { ingredientName: 'chicken breast', costPerUnit: 5.99, unit: 'lb', tag: 'macro-bearing' as const },
+      { ingredientName: 'rice', costPerUnit: 0.89, unit: 'lb', tag: 'macro-bearing' as const },
+      { ingredientName: 'hot sauce', costPerUnit: 0, unit: 'bottle', tag: 'flavor-condiment' as const },
+    ],
+    portionModel: [
+      { ingredientName: 'chicken breast', portionSize: 0.25 },
+      { ingredientName: 'rice', portionSize: 0.5 },
+    ],
+    foodFloorMeta: {
+      lastComputedFloor: 1250,
+      allTimeHighWater: 1250,
+      lastRefinedFromReceipts: null as string | null,
+    },
+  }
+  return {
+    foodAtomState,
+    mockSaveFlavorLine: vi.fn(),
+    mockSaveMealDefinition: vi.fn(),
+    mockUpdateMealDefinition: vi.fn(),
+    mockDeleteMealDefinition: vi.fn(),
+    mockSaveUnitCostMap: vi.fn(),
+    mockSavePortionModel: vi.fn(),
+    mockSaveFoodFloorMeta: vi.fn(),
+  }
+})
 
+// ── Atom mocks ────────────────────────────────────────────────────────────────
 vi.mock('../domains/food/food.atoms', () => ({
   foodFloorAtom: {
-    init: mockFoodFloorResult,
-    read: () => mockFoodFloorResult,
+    init: foodAtomState.foodFloorResult,
+    read: (_get: unknown) => foodAtomState.foodFloorResult,
   },
   foodBadgeStatusAtom: {
     init: 'clean',
-    read: () => mockBadgeStatus,
+    read: (_get: unknown) => foodAtomState.badgeStatus,
   },
   flavorLineAtom: {
     init: { amount: 50 },
-    read: () => mockFlavorLine,
+    read: (_get: unknown) => foodAtomState.flavorLine,
   },
   saveFlavorLineAtom: {
     init: null,
     write: (_get: unknown, _set: unknown, line: unknown) => mockSaveFlavorLine(line),
   },
   mealDefinitionsAtom: {
-    init: mockMealDefinitions,
-    read: () => mockMealDefinitions,
+    init: foodAtomState.mealDefinitions,
+    read: (_get: unknown) => foodAtomState.mealDefinitions,
   },
   unitCostMapAtom: {
-    init: mockUnitCostMap,
-    read: () => mockUnitCostMap,
+    init: foodAtomState.unitCostMap,
+    read: (_get: unknown) => foodAtomState.unitCostMap,
   },
   saveUnitCostMapAtom: {
     init: null,
     write: (_get: unknown, _set: unknown, entries: unknown) => mockSaveUnitCostMap(entries),
   },
   portionModelAtom: {
-    init: mockPortionModel,
-    read: () => mockPortionModel,
+    init: foodAtomState.portionModel,
+    read: (_get: unknown) => foodAtomState.portionModel,
   },
   savePortionModelAtom: {
     init: null,
     write: (_get: unknown, _set: unknown, entries: unknown) => mockSavePortionModel(entries),
   },
   foodFloorMetaAtom: {
-    init: mockFoodFloorMeta,
-    read: () => mockFoodFloorMeta,
+    init: foodAtomState.foodFloorMeta,
+    read: (_get: unknown) => foodAtomState.foodFloorMeta,
+  },
+  saveFoodFloorMetaAtom: {
+    init: null,
+    write: (_get: unknown, _set: unknown, meta: unknown) => mockSaveFoodFloorMeta(meta),
   },
   saveMealDefinitionAtom: {
     init: null,
@@ -110,71 +135,6 @@ vi.mock('../domains/food/food.atoms', () => ({
   },
 }))
 
-// saveFoodFloorMetaAtom (write atom for "Mark refined today")
-vi.mock('../domains/food/food.atoms', async (importOriginal) => {
-  const original = await importOriginal<Record<string, unknown>>()
-  return {
-    ...original,
-    foodFloorAtom: {
-      init: mockFoodFloorResult,
-      read: () => mockFoodFloorResult,
-    },
-    foodBadgeStatusAtom: {
-      init: 'clean',
-      read: () => mockBadgeStatus,
-    },
-    flavorLineAtom: {
-      init: { amount: 50 },
-      read: () => mockFlavorLine,
-    },
-    saveFlavorLineAtom: {
-      init: null,
-      write: (_get: unknown, _set: unknown, line: unknown) => mockSaveFlavorLine(line),
-    },
-    mealDefinitionsAtom: {
-      init: mockMealDefinitions,
-      read: () => mockMealDefinitions,
-    },
-    unitCostMapAtom: {
-      init: mockUnitCostMap,
-      read: () => mockUnitCostMap,
-    },
-    saveUnitCostMapAtom: {
-      init: null,
-      write: (_get: unknown, _set: unknown, entries: unknown) => mockSaveUnitCostMap(entries),
-    },
-    portionModelAtom: {
-      init: mockPortionModel,
-      read: () => mockPortionModel,
-    },
-    savePortionModelAtom: {
-      init: null,
-      write: (_get: unknown, _set: unknown, entries: unknown) => mockSavePortionModel(entries),
-    },
-    foodFloorMetaAtom: {
-      init: mockFoodFloorMeta,
-      read: () => mockFoodFloorMeta,
-    },
-    saveFoodFloorMetaAtom: {
-      init: null,
-      write: (_get: unknown, _set: unknown, meta: unknown) => mockSaveFoodFloorMeta(meta),
-    },
-    saveMealDefinitionAtom: {
-      init: null,
-      write: (_get: unknown, _set: unknown, meal: unknown) => mockSaveMealDefinition(meal),
-    },
-    updateMealDefinitionAtom: {
-      init: null,
-      write: (_get: unknown, _set: unknown, args: unknown) => mockUpdateMealDefinition(args),
-    },
-    deleteMealDefinitionAtom: {
-      init: null,
-      write: (_get: unknown, _set: unknown, id: unknown) => mockDeleteMealDefinition(id),
-    },
-  }
-})
-
-// Mock expenses atoms (for gateableExpensesAtom — D-10 presentation join)
 vi.mock('../domains/expenses/expenses.atoms', () => ({
   gateableExpensesAtom: {
     init: [
@@ -191,6 +151,10 @@ vi.mock('../domains/expenses/expenses.atoms', () => ({
   updateExpenseItemAtom: { init: null },
   deleteExpenseItemAtom: { init: null },
 }))
+
+// ── Imports (after mocks) ─────────────────────────────────────────────────────
+import FoodPage from './FoodPage'
+import FoodConfigPage from './FoodConfigPage'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -216,21 +180,18 @@ function renderFoodConfigPage() {
   )
 }
 
-import FoodPage from './FoodPage'
-import FoodConfigPage from './FoodConfigPage'
-
 // ── FoodPage tests ─────────────────────────────────────────────────────────────
 
 describe('FoodPage', () => {
   beforeEach(() => {
-    mockFoodFloorResult = {
+    foodAtomState.foodFloorResult = {
       floor: FLOOR_VALUE,
       gaps: [],
       isClean: true,
       planIsCurrent: true,
     }
-    mockBadgeStatus = 'clean'
-    mockFlavorLine = { amount: 50 }
+    foodAtomState.badgeStatus = 'clean'
+    foodAtomState.flavorLine = { amount: 50 }
     vi.clearAllMocks()
   })
 
@@ -241,21 +202,18 @@ describe('FoodPage', () => {
     expect(inputs).toHaveLength(0)
   })
 
-  it('V6/FOOD-12: a Lock icon is present in the floor card', () => {
+  it('V6/FOOD-12: a Lock icon (SVG with data-testid) is present in the floor card', () => {
     renderFoodPage()
     const floorCard = screen.getByTestId('protected-floor-card')
-    // Lock icon rendered as SVG or with aria-hidden; check the card contains a lock indicator
-    const lockIcon = floorCard.querySelector('[data-testid="lock-icon"]') ??
-      floorCard.querySelector('[aria-label="lock"]') ??
-      floorCard.querySelector('svg[aria-hidden="true"]')
+    const lockIcon = floorCard.querySelector('[data-testid="lock-icon"]')
     expect(lockIcon).not.toBeNull()
   })
 
   it('V6/FOOD-12: the floor card shows the exact floor value from foodFloorAtom.floor', () => {
     renderFoodPage()
-    // The floor value rendered via currency formatter
-    expect(screen.getByTestId('floor-value')).toBeInTheDocument()
-    expect(screen.getByTestId('floor-value').textContent).toContain('1,250')
+    const floorVal = screen.getByTestId('floor-value')
+    expect(floorVal).toBeInTheDocument()
+    expect(floorVal.textContent).toContain('1,250')
   })
 
   it('V6/FOOD-12: the explainer "Computed from your meal plan — protected" is visible', () => {
@@ -270,8 +228,8 @@ describe('FoodPage', () => {
   })
 
   it('EDGE-02/D-11: amber "Needs attention" badge renders when gaps exist', () => {
-    mockBadgeStatus = 'needs-attention'
-    mockFoodFloorResult = {
+    foodAtomState.badgeStatus = 'needs-attention'
+    foodAtomState.foodFloorResult = {
       floor: 550,
       gaps: [{ type: 'stale-plan', lastKnownDate: '2026-04-30' }],
       isClean: false,
@@ -282,8 +240,8 @@ describe('FoodPage', () => {
   })
 
   it('EDGE-02/D-11: expanding the amber badge lists the stale-plan gap copy', () => {
-    mockBadgeStatus = 'needs-attention'
-    mockFoodFloorResult = {
+    foodAtomState.badgeStatus = 'needs-attention'
+    foodAtomState.foodFloorResult = {
       floor: 550,
       gaps: [{ type: 'stale-plan', lastKnownDate: '2026-04-30' }],
       isClean: false,
@@ -292,15 +250,15 @@ describe('FoodPage', () => {
     renderFoodPage()
     const badge = screen.getByTestId('food-status-badge')
     fireEvent.click(badge)
-    expect(screen.getByRole('list', { hidden: true })).toBeInTheDocument()
+    expect(screen.getByRole('list')).toBeInTheDocument()
     expect(screen.getByText(/No meal plan covers today/)).toBeInTheDocument()
   })
 
   it('EDGE-03/D-11: expanding badge lists unpriced ingredient gap', () => {
-    mockBadgeStatus = 'needs-attention'
-    mockFoodFloorResult = {
+    foodAtomState.badgeStatus = 'needs-attention'
+    foodAtomState.foodFloorResult = {
       floor: 1250,
-      gaps: [{ type: 'unpriced-ingredient', name: 'olive oil' }],
+      gaps: [{ type: 'unpriced-ingredient', ingredientName: 'olive oil' }],
       isClean: false,
       planIsCurrent: true,
     }
@@ -315,45 +273,42 @@ describe('FoodPage', () => {
     expect(screen.getByTestId('food-status-badge')).toHaveTextContent('Plan current')
   })
 
-  it('FOOD-10: "Flavor & condiments — protected" renders with an editable amount', () => {
+  it('FOOD-10: "Flavor & condiments — protected" renders with an editable amount input', () => {
     renderFoodPage()
     expect(screen.getByText('Flavor & condiments — protected')).toBeInTheDocument()
-    // The flavor NumberInput should be present
-    const flavorInput = screen.getByTestId('flavor-amount-input')
-    expect(flavorInput).toBeInTheDocument()
-    const input = flavorInput.querySelector('input') ?? flavorInput
-    // The input should be interactive (not disabled)
-    if (input.tagName === 'INPUT') {
-      expect(input).not.toBeDisabled()
-    }
+    const flavorWidget = screen.getByTestId('flavor-amount-input')
+    expect(flavorWidget).toBeInTheDocument()
+    const input = flavorWidget.querySelector('input')
+    expect(input).not.toBeNull()
+    expect(input).not.toBeDisabled()
   })
 
-  it('Empty state: "No meal plan found" heading renders when planIsCurrent=false and no gaps of other type', () => {
-    mockFoodFloorResult = {
+  it('Stale badge state: badge renders "Needs attention" when planIsCurrent=false', () => {
+    foodAtomState.foodFloorResult = {
       floor: 550,
       gaps: [{ type: 'stale-plan', lastKnownDate: null }],
       isClean: false,
       planIsCurrent: false,
     }
-    mockBadgeStatus = 'needs-attention'
+    foodAtomState.badgeStatus = 'needs-attention'
     renderFoodPage()
-    // The stale state still shows the floor but with a fallback badge — check for badge
-    expect(screen.getByTestId('food-status-badge')).toBeInTheDocument()
+    expect(screen.getByTestId('food-status-badge')).toHaveTextContent('Needs attention')
   })
 
   it('I-06 double-count guard: discretionary food total is a separate figure and does not change the floor value', () => {
     renderFoodPage()
-    // Floor value from foodFloorAtom.floor
     const floorDisplay = screen.getByTestId('floor-value')
     expect(floorDisplay.textContent).toContain('1,250')
-    // Discretionary section should show the gateable expenses sum (80)
     const gateableSection = screen.getByTestId('gateable-food-section')
     expect(gateableSection).toBeInTheDocument()
-    // The floor value must NOT include the 80 discretionary amount (1250 not 1330)
+    // Floor value must NOT include the 80 discretionary (1250 not 1330)
     expect(floorDisplay.textContent).not.toContain('1,330')
+    // Protected floor card must show only the floor, not the gateable 80
+    const floorCard = screen.getByTestId('protected-floor-card')
+    expect(floorCard.textContent).not.toContain('80')
   })
 
-  it('C1 copy guard: NEVER-USE strings are absent from the rendered page', () => {
+  it('C1 copy guard: NEVER-USE strings absent from rendered page', () => {
     const { container } = renderFoodPage()
     const html = container.innerHTML.toLowerCase()
     expect(html).not.toContain('cut food')
@@ -368,20 +323,20 @@ describe('FoodPage', () => {
 describe('FoodConfigPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockMealDefinitions = [
+    foodAtomState.mealDefinitions = [
       { id: 1, mealName: 'chicken, rice, and broccoli', type: 'decomposed' as const, ingredients: ['chicken breast', 'rice'] },
       { id: 2, mealName: 'qdoba bowl', type: 'flat-cost' as const, ingredients: [], flatCost: undefined },
     ]
-    mockUnitCostMap = [
+    foodAtomState.unitCostMap = [
       { ingredientName: 'chicken breast', costPerUnit: 5.99, unit: 'lb', tag: 'macro-bearing' as const },
       { ingredientName: 'rice', costPerUnit: 0.89, unit: 'lb', tag: 'macro-bearing' as const },
       { ingredientName: 'hot sauce', costPerUnit: 0, unit: 'bottle', tag: 'flavor-condiment' as const },
     ]
-    mockPortionModel = [
+    foodAtomState.portionModel = [
       { ingredientName: 'chicken breast', portionSize: 0.25 },
       { ingredientName: 'rice', portionSize: 0.5 },
     ]
-    mockFoodFloorMeta = {
+    foodAtomState.foodFloorMeta = {
       lastComputedFloor: FLOOR_VALUE,
       allTimeHighWater: FLOOR_VALUE,
       lastRefinedFromReceipts: null,
@@ -416,36 +371,27 @@ describe('FoodConfigPage', () => {
     expect(screen.getByText('Flat cost')).toBeInTheDocument()
   })
 
-  it('Table A: flat-cost meal exposes a NumberInput for its cost', () => {
+  it('Table B: unit-cost map renders rows', () => {
     renderFoodConfigPage()
-    // "qdoba bowl" is flat-cost with no cost set — should show a NumberInput for cost
-    const tableA = screen.getByTestId('table-a-meal-definitions')
-    expect(tableA).toBeInTheDocument()
-  })
-
-  it('Table B: unit-cost map renders rows with Tag and cost', () => {
-    renderFoodConfigPage()
-    expect(screen.getByTestId('table-b-unit-cost-map')).toBeInTheDocument()
-    expect(screen.getByText('chicken breast')).toBeInTheDocument()
-  })
-
-  it('EDGE-03: unpriced rows (cost 0) carry warning style and a visible text flag', () => {
-    renderFoodConfigPage()
-    // "hot sauce" has cost 0 — should have warning styling and text indicator
     const tableB = screen.getByTestId('table-b-unit-cost-map')
-    // Check for the unpriced indicator text
-    expect(tableB.textContent).toMatch(/unpriced|no cost|needs cost/i)
+    expect(tableB).toBeInTheDocument()
+    expect(tableB.textContent).toContain('chicken breast')
   })
 
-  it('Table C: portion model renders macro-bearing ingredients with editable portions', () => {
+  it('EDGE-03: unpriced rows (cost 0) carry a visible text flag', () => {
+    renderFoodConfigPage()
+    const tableB = screen.getByTestId('table-b-unit-cost-map')
+    expect(tableB.textContent).toMatch(/unpriced|no cost/i)
+  })
+
+  it('Table C: portion model renders macro-bearing ingredients', () => {
     renderFoodConfigPage()
     expect(screen.getByTestId('table-c-portion-model')).toBeInTheDocument()
-    // chicken breast and rice are macro-bearing — should be in Table C
     const tableC = screen.getByTestId('table-c-portion-model')
     expect(tableC.textContent).toContain('chicken breast')
   })
 
-  it('FOOD-13: "Last refined from receipts" renders with null state copy', () => {
+  it('FOOD-13: "Last refined from receipts" renders with "Not yet recorded" when null', () => {
     renderFoodConfigPage()
     expect(screen.getByText(/Last refined from receipts/)).toBeInTheDocument()
     expect(screen.getByText(/Not yet recorded/)).toBeInTheDocument()
@@ -456,35 +402,30 @@ describe('FoodConfigPage', () => {
     expect(screen.getByRole('button', { name: /Mark refined today/ })).toBeInTheDocument()
   })
 
-  it('FOOD-13: clicking "Mark refined today" calls the save atom (timestamp, not dollar edit)', async () => {
+  it('FOOD-13: clicking "Mark refined today" calls saveFoodFloorMetaAtom with an ISO timestamp', async () => {
     renderFoodConfigPage()
     const btn = screen.getByRole('button', { name: /Mark refined today/ })
     fireEvent.click(btn)
     await waitFor(() => {
       expect(mockSaveFoodFloorMeta).toHaveBeenCalledOnce()
     })
-    // Verify it passes a meta object with a lastRefinedFromReceipts timestamp (string), not a floor change
-    const callArg = mockSaveFoodFloorMeta.mock.calls[0][0] as { lastRefinedFromReceipts: unknown; lastComputedFloor: unknown }
+    const callArgs = mockSaveFoodFloorMeta.mock.calls as Array<[{ lastRefinedFromReceipts: unknown; lastComputedFloor: unknown }]>
+    const firstCall = callArgs[0]
+    if (!firstCall) throw new Error('Expected saveFoodFloorMeta to be called')
+    const callArg = firstCall[0]
     expect(typeof callArg.lastRefinedFromReceipts).toBe('string')
-    // lastComputedFloor must not change
-    expect(callArg.lastComputedFloor).toBe(mockFoodFloorMeta.lastComputedFloor)
+    // lastComputedFloor must not change from current meta
+    expect(callArg.lastComputedFloor).toBe(foodAtomState.foodFloorMeta.lastComputedFloor)
   })
 
-  it('I-05 new-row tag default: a newly-added Table B ingredient row defaults tag to "Macro-bearing"', () => {
+  it('I-05 new-row tag default: clicking "Add ingredient" shows new row with "macro-bearing" tag default', () => {
     renderFoodConfigPage()
     const addBtn = screen.getByRole('button', { name: /Add ingredient/ })
     fireEvent.click(addBtn)
-    // After clicking "Add ingredient", a new row form appears with a Tag select
-    // The default value should be "macro-bearing"
-    const tagSelects = screen.getAllByLabelText(/Tag/i)
-    if (tagSelects.length > 0) {
-      const lastTagSelect = tagSelects[tagSelects.length - 1] as HTMLSelectElement
-      expect(lastTagSelect.value).toBe('macro-bearing')
-    } else {
-      // Alternative: check for a select with value macro-bearing in the new row form
-      const newRowForm = screen.getByTestId('new-ingredient-row')
-      const select = newRowForm.querySelector('select') as HTMLSelectElement
-      expect(select?.value).toBe('macro-bearing')
-    }
+    const newRow = screen.getByTestId('new-ingredient-row')
+    expect(newRow).toBeInTheDocument()
+    const select = newRow.querySelector('select') as HTMLSelectElement
+    expect(select).not.toBeNull()
+    expect(select.value).toBe('macro-bearing')
   })
 })
