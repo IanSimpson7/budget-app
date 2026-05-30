@@ -32,7 +32,10 @@ export default function IncomeBar({ mtdTotal, projectedMonth, passiveFloor, defe
   const base = projectedMonth > 0 ? projectedMonth : 1
 
   // Label the defended-line tick from the prop — lowercase to keep the "$3k" aesthetic.
-  const defendedLabel = compactCurrency.format(defendedLine).toLowerCase()
+  // Strip a trailing ".0" before the compact unit so round values render "$3k", not
+  // "$3.0k": ICU compact-notation trailing-zero behavior differs across Node/ICU
+  // versions (Node 20 emitted "$3.0k", Node 24 emits "$3k"). Normalize for stability.
+  const defendedLabel = compactCurrency.format(defendedLine).toLowerCase().replace(/\.0(?=[a-z])/, '')
 
   const fillPct = Math.min(100, (mtdTotal / base) * 100)
   const ghostPct = projectedMonth > mtdTotal ? 100 - fillPct : 0
