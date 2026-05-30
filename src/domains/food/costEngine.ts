@@ -10,19 +10,21 @@
  * No I/O, no Dexie, no atoms.
  *
  * Open Question 1 resolution (04-RESEARCH.md A4):
- * FALLBACK_CEILING_PER_MEAL = $15.00
+ * FALLBACK_CEILING_MEAL = $15.00 (full meal), FALLBACK_CEILING_SNACK = $5.00 (snack/shake).
+ * V6: classifyMealKind selects the ceiling; see classifyMealKind() doc for corpus.
  * Rationale: Qdoba bowl ~$11; a full prep-cooked meal ~$3–5; $15 is conservative-high
- * per meal. A static constant (NOT "most-expensive-defined-meal") so the fallback is
+ * per meal. Snack/shake ~$2–4; $5 is conservative-high for a light occasion.
+ * Static constants (NOT "most-expensive-defined-meal") so the fallback is
  * deterministic even when no meals are defined yet (early setup). Per RESEARCH A4.
  */
 import type { MealDefinition, UnitCostEntry, PortionEntry, FoodFloorMeta } from './food.types'
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FALLBACK_CEILING_PER_MEAL (Open Question 1 — resolved)
+// Fallback ceilings (Open Question 1 — resolved; V6: kind-aware)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Conservative-high fallback cost per meal.
+ * Conservative-high fallback cost for a FULL MEAL.
  * Used when: undefined meal, unset flat cost, or any unpriced ingredient in a
  * decomposed meal triggers a C1-safe fallback (never undercount).
  *
@@ -31,7 +33,58 @@ import type { MealDefinition, UnitCostEntry, PortionEntry, FoodFloorMeta } from 
  * Static constant (not dynamic "most-expensive-defined-meal") so the fallback is
  * deterministic even before any meals are defined — per RESEARCH Open Question 1 / A4.
  */
-export const FALLBACK_CEILING_PER_MEAL = 15
+export const FALLBACK_CEILING_MEAL = 15
+
+/**
+ * Conservative-high fallback cost for a SNACK / SHAKE / LIGHT EATING OCCASION.
+ * Applies when classifyMealKind(name) === 'snack' and the meal triggers any gap.
+ *
+ * Value: $5.00
+ * Rationale: protein shake, yogurt, cereal — real cost $2–4; $5 is conservative-high
+ * for a light occasion. Always > $0 (C1 invariant: never undercount).
+ */
+export const FALLBACK_CEILING_SNACK = 5
+
+/**
+ * @deprecated Use FALLBACK_CEILING_MEAL. Back-compat alias — external callers that
+ * imported FALLBACK_CEILING_PER_MEAL before V6 continue to resolve to FALLBACK_CEILING_MEAL.
+ */
+export const FALLBACK_CEILING_PER_MEAL = FALLBACK_CEILING_MEAL
+
+// ─────────────────────────────────────────────────────────────────────────────
+// classifyMealKind — FALLBACK-ONLY heuristic
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Classify a meal name as 'snack' or 'meal' for fallback-ceiling selection.
+ *
+ * FALLBACK-ONLY: this heuristic affects cost ONLY when a meal already triggers
+ * a gap (unpriced/undefined/unset). Once ingredients are priced, the exact
+ * portion×cost sum supersedes the fallback ceiling entirely — classifyMealKind
+ * plays no role on priced paths.
+ *
+ * Conservative default = 'meal' for any name that does not match a snack keyword.
+ * An unknown name is treated as a full meal (conservative-high per C1).
+ *
+ * Snack keywords matched against the normalized (lowercased) meal name:
+ *   shake, cereal, yogurt, rice cake, cream pie, granola
+ *
+ * Corpus verification (14-meal corpus, 2026-05-29):
+ *   Snacks: Cereal and milk · Greek yogurt with granola and berries ·
+ *           Oatmeal cream pie and banana · Protein shake and banana ·
+ *           Protein Slop and Granola · Rice cakes with peanut butter and banana
+ *   Meals:  Chicken rice broccoli · Eggs and PB toast · French Toast and Eggs ·
+ *           Oatmeal and protein slop · Pasta beef cheese · Qdoba bowl ·
+ *           Sweet potato beef cheese · Turkey sandwich
+ */
+export function classifyMealKind(mealName: string): 'meal' | 'snack' {
+  const lower = mealName.toLowerCase()
+  const snackKeywords = ['shake', 'cereal', 'yogurt', 'rice cake', 'cream pie', 'granola']
+  for (const kw of snackKeywords) {
+    if (lower.includes(kw)) return 'snack'
+  }
+  return 'meal'
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -96,17 +149,19 @@ export interface ParsedPlan {
  *   1. For each scheduled meal, compute its cost:
  *      - decomposed: Σ (portionSize × costPerUnit) over MACRO-BEARING ingredients only (D-05)
  *        If any macro-bearing ingredient is unpriced (missing or costPerUnit === 0):
- *          → use FALLBACK_CEILING_PER_MEAL for the WHOLE meal + add gap (C1-critical)
+ *          → use classifyMealKind-aware ceiling for the WHOLE meal + add gap (C1-critical)
  *      - flat-cost: use flatCost field
  *        If flatCost is unset (undefined):
- *          → use FALLBACK_CEILING_PER_MEAL + add gap
+ *          → use classifyMealKind-aware ceiling + add gap
  *      - undefined (no MealDefinition row):
- *          → use FALLBACK_CEILING_PER_MEAL + add gap
+ *          → use classifyMealKind-aware ceiling + add gap
+ *      Ceiling selection: classifyMealKind(name)==='snack' → FALLBACK_CEILING_SNACK (5)
+ *                         otherwise                        → FALLBACK_CEILING_MEAL  (15)
  *   2. dailyAverage = totalScheduledCost / windowDays
  *   3. floor = dailyAverage × daysInMonth  (I-01: daysInMonth is caller-supplied)
  *   4. Dedupe gaps by (type, name)
  *
- * C1 guarantee: every gap path contributes FALLBACK_CEILING_PER_MEAL, never $0.
+ * C1 guarantee: every gap path contributes FALLBACK_CEILING_MEAL or FALLBACK_CEILING_SNACK, never $0.
  */
 export function computeFloor(input: CostEngineInput): CostEngineResult {
   const { scheduledMeals, mealDefinitions, unitCostMap, portionModel, daysInMonth, windowDays } = input
@@ -130,16 +185,18 @@ export function computeFloor(input: CostEngineInput): CostEngineResult {
 
     if (!def) {
       // V3b: undefined meal — no MealDefinition row
+      // V6: kind-aware ceiling — snack keywords get FALLBACK_CEILING_SNACK, others FALLBACK_CEILING_MEAL
       rawGaps.push({ type: 'undefined-meal', mealName })
-      totalScheduledCost += FALLBACK_CEILING_PER_MEAL
+      totalScheduledCost += classifyMealKind(mealName) === 'snack' ? FALLBACK_CEILING_SNACK : FALLBACK_CEILING_MEAL
       continue
     }
 
     if (def.type === 'flat-cost') {
       if (def.flatCost === undefined || def.flatCost === null) {
         // V3c: unset flat cost
+        // V6: kind-aware ceiling
         rawGaps.push({ type: 'unset-flat-cost', mealName: def.mealName })
-        totalScheduledCost += FALLBACK_CEILING_PER_MEAL
+        totalScheduledCost += classifyMealKind(def.mealName) === 'snack' ? FALLBACK_CEILING_SNACK : FALLBACK_CEILING_MEAL
       } else {
         totalScheduledCost += def.flatCost
       }
@@ -170,7 +227,8 @@ export function computeFloor(input: CostEngineInput): CostEngineResult {
     if (mealHasGap) {
       // C1-CRITICAL: entire meal falls back high — NEVER the partial sum that omits
       // the unpriced ingredient as $0. A partial sum would undercount the floor.
-      totalScheduledCost += FALLBACK_CEILING_PER_MEAL
+      // V6: kind-aware ceiling — snack-classified meals use the snack ceiling
+      totalScheduledCost += classifyMealKind(mealName) === 'snack' ? FALLBACK_CEILING_SNACK : FALLBACK_CEILING_MEAL
     } else {
       // All macro-bearing ingredients are priced — sum portion × costPerUnit
       let mealCost = 0
