@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 4 UI-SPEC approved
-last_updated: "2026-05-30T10:51:00.858Z"
+stopped_at: Phase 4 Plan 4 complete — food atom chain wired, survivalFloorAtom swapped to computed food floor (V7), README V8
+last_updated: "2026-05-30T12:00:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 16
-  completed_plans: 12
-  percent: 75
+  completed_plans: 18
+  percent: 97
 ---
 
 # State: Budget App
@@ -37,12 +37,12 @@ progress:
 ## Current Position
 
 Phase: 04 (food-contract-locked-floor) — EXECUTING
-Plan: 2 of 5
+Plan: 5 of 5
 **Phase:** 4 (food-contract-locked-floor)
-**Plan:** 2 (04-01 complete)
+**Plan:** 5 (04-04 complete; 04-05 next)
 **Status:** Executing Phase 04
-**Progress:** [████████░░] 75%
-**Last completed:** Phase 4 Plan 1 — food storage foundation (schema v4, mealDefinitions table, food types, CRUD, singletons, seed, C1 lock)
+**Progress:** [████████░░] 97%
+**Last completed:** Phase 4 Plan 4 — food atom chain (glob loader, liveQuery, foodFloorAtom, survivalFloorAtom integration, V8 README)
 
 ---
 
@@ -60,6 +60,9 @@ Plan: 2 of 5
 | Phase 03 P02 | 7m | 3 tasks | 10 files |
 | Phase 03 P03 | 286s | 2 tasks | 5 files |
 | Phase 04-food-contract-locked-floor P01 | 449 | 2 tasks | 9 files |
+| Phase 04-food-contract-locked-floor P02 | 260 | 2 tasks | 7 files |
+| Phase 04-food-contract-locked-floor P03 | 600 | 2 tasks | 2 files |
+| Phase 04-food-contract-locked-floor P04 | 1500 | 2 tasks | 6 files |
 
 ## Quick Tasks Completed
 
@@ -122,6 +125,14 @@ Verified against `../schedule-meal-coordinator/plans/*.md` (5 live files). Spec 
 - Deploy workflow test-gates (`npm run test -- --run`) BEFORE build; a failing test blocks deploy.
 - Pages source = "GitHub Actions" (artifact flow), not a gh-pages branch. All actions are official GitHub-owned, pinned to MAJOR tags (T-01-13).
 - Live URL: https://iansimpson7.github.io/budget-app/ — phone-verified by Ian.
+
+### Key Decisions (added 04-04)
+
+- **glob syntax**: `query: '?raw', import: 'default'` (Vite 5+ form; `as: 'raw'` is deprecated).
+- **DEFAULT_FOOD_FLOOR_SEED guard**: stale path shows 550 when `max(last,highWater)=0` (never $0 — C1).
+- **V7 integration**: `survivalFloorAtom` reads `foodFloorAtom.floor` (not `floors.foodSeed`); `floorsLoadAtom` no longer needed in expenses.atoms.ts.
+- **I-02 DEV guard**: `console.error` when glob resolves 0 files in DEV mode — wrong path depth is caught before silently mimicking CI fallback.
+- **CI fallback documented in README**: deployed app always shows stale floor (local build-then-push flow for plan data updates).
 
 ### Key Decisions (added 04-01)
 
