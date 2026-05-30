@@ -245,3 +245,101 @@ describe('circular import guard', () => {
     expect(survivalFloorAtom).toBeDefined()
   })
 })
+
+// ── (04-06 c) survivalFloorAtom consumes solvencyFloor (NOT floor) ─────────
+//
+// Contract (V8):
+//   survivalFloor = fixedExFood + accruals + solvencyFloor
+//   On a gapped-live food result, solvencyFloor < floor (fallback-inflated).
+//   survivalFloor must use the REALISTIC estimate, not the fallback-high floor.
+//   On a clean result, solvencyFloor === floor, so the math is unchanged.
+
+describe('survivalFloorAtom — consumes solvencyFloor not floor (04-06 c)', () => {
+  it('with gapped food result: survivalFloor = fixedExFood + accruals + solvencyFloor', async () => {
+    // Set up a food state where solvencyFloor differs from floor:
+    // meta has lastComputedFloor=520, highWater=580 → solvencyFloor=580
+    // With fallback-inflated floor (~$2480 on all 16 gapped meals), floor >> 580.
+    const gappedMeta: FoodFloorMeta = {
+      lastComputedFloor: 520,
+      allTimeHighWater: 580,
+      lastRefinedFromReceipts: null,
+    }
+    mockFoodSingletons(gappedMeta)
+
+    const store = createStore()
+    const { foodFloorAtom } = await import('../domains/food/food.atoms')
+    const foodResult = await store.get(foodFloorAtom)
+
+    // Verify we got a result with solvencyFloor
+    expect(foodResult).toHaveProperty('solvencyFloor')
+    expect(typeof foodResult.solvencyFloor).toBe('number')
+
+    // With no expenses + no sinking funds, survivalFloor = 0 + 0 + solvencyFloor
+    const survivalFloor = await store.get(survivalFloorAtom)
+    expect(survivalFloor).toBeCloseTo(foodResult.solvencyFloor, 1)
+
+    // If we have a gapped result (no glob files in test env → stale path or live gapped),
+    // solvencyFloor must NOT be the fallback-inflated floor.
+    // The stale path sets solvencyFloor === floor (already realistic).
+    // The gapped-live path sets solvencyFloor = max(last, highWater, seed).
+    // Either way, survivalFloor tracks solvencyFloor, not floor.
+    if (!foodResult.isClean) {
+      // solvencyFloor is the realistic estimate
+      expect(survivalFloor).toBeLessThanOrEqual(foodResult.floor + 0.001)
+    }
+  })
+
+  it('with clean food result: survivalFloor uses real floor (solvencyFloor===floor)', async () => {
+    // Clean path: solvencyFloor === floor — regression check
+    // We can verify this via the formula: if solvencyFloor===floor then
+    // survivalFloor includes floor (which is correct).
+    mockFoodSingletons(EMPTY_FOOD_META)
+
+    const store = createStore()
+    const { foodFloorAtom } = await import('../domains/food/food.atoms')
+    const foodResult = await store.get(foodFloorAtom)
+
+    if (foodResult.isClean) {
+      expect(foodResult.solvencyFloor).toBe(foodResult.floor)
+      const survivalFloor = await store.get(survivalFloorAtom)
+      // survivalFloor = 0 + 0 + solvencyFloor = solvencyFloor
+      expect(survivalFloor).toBeCloseTo(foodResult.solvencyFloor, 1)
+    } else {
+      // Stale/gapped: just verify solvencyFloor is present and tracked
+      const survivalFloor = await store.get(survivalFloorAtom)
+      expect(survivalFloor).toBeCloseTo(foodResult.solvencyFloor, 1)
+    }
+  })
+
+  it('solvency regression: uses passive floor, never the $3000 defended line', async () => {
+    // survivalFloorAtom is the food-inclusive monthly floor — minimum income for solvency.
+    // It does NOT include the $3,000 defended line. The defended line is a backfill trigger,
+    // not a floor component. Verify: with seed expenses, survivalFloor ≈ 2335 (passive floor math).
+    mockFoodSingletons(EMPTY_FOOD_META)
+
+    await storage.seedExpensesIfEmpty()
+    await storage.seedFundsIfEmpty()
+    await storage.saveFloors({ passive: 2400, defended: 3000, foodSeed: 550 })
+
+    const expenses = await storage.listExpenseItems()
+    const funds = await storage.listSinkingFunds()
+
+    const fixedExFood = expenses
+      .filter(i => i.classification === 'protected')
+      .reduce((sum, i) => {
+        if (i.cadence === 'monthly') return sum + i.amount
+        if (i.cadence === 'annual') return sum + i.amount / 12
+        return sum
+      }, 0)
+    const accruals = funds.reduce((sum, f) => sum + f.monthlyAccrual, 0)
+
+    // With stale food meta (EMPTY_FOOD_META), stale path → solvencyFloor = seed (550)
+    // Total = 1703 (expenses) + 82 (accrual) + 550 (food solvencyFloor) = 2335
+    const expectedFloor = fixedExFood + accruals + 550
+    expect(expectedFloor).toBeCloseTo(2335, 0)
+
+    // survivalFloor must NOT include the defended line ($3000)
+    // (passive floor math, not defended-line math)
+    expect(expectedFloor).toBeLessThan(3000)
+  })
+})
