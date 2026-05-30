@@ -3,9 +3,11 @@
 // Source atom: atomWithObservable over storage.observeExpenseItems().
 //   initialValue:[] prevents Suspense (Pitfall 1 / React 19 re-suspension bug).
 //
-// survivalFloorAtom: the headline output of Phase 3.
-//   survival_floor = fixed_ex_food + Σ(sinking-fund monthlyAccruals) + floors.foodSeed
-//   Async because floorsLoadAtom reads from IndexedDB on first load (D-08).
+// survivalFloorAtom: the headline output of Phase 3, updated in Phase 4 (04-04).
+//   survival_floor = fixed_ex_food + Σ(sinking-fund monthlyAccruals) + foodFloorAtom.floor
+//   Phase 4 replaces floors.foodSeed with the live/reactive food floor (V7).
+//   Import direction: expenses → food (one-way; food never imports expenses — Pitfall 4).
+//   Async because foodFloorAtom is async (IDB + glob load on first access).
 //   NEVER stored (FOUND-06) — always derived from source atoms.
 //
 // Boundary: this file imports `storage` and schema types only — NEVER `db`.
@@ -14,9 +16,9 @@
 import { atom } from 'jotai'
 import { atomWithObservable } from 'jotai/utils'
 import * as storage from '../../storage/storage'
-import { floorsLoadAtom } from '../settings/settings.atoms'
 import { toMonthlyEquivalent } from '../../storage/schema'
 import { sinkingFundAccrualsAtom } from '../funds/funds.atoms'
+import { foodFloorAtom } from '../food/food.atoms'
 import type { ExpenseItem } from '../../storage/schema'
 
 // ── Source atom ────────────────────────────────────────────────────────────────
@@ -46,16 +48,26 @@ const fixedExFoodAtom = atom((get): number =>
   ),
 )
 
-// ── survivalFloorAtom (EXP-03, D-08) ──────────────────────────────────────────
-// survival_floor = fixed_ex_food + Σ(monthlyAccruals) + floors.foodSeed
-// Async because floorsLoadAtom is async (IDB read on first access).
+// ── survivalFloorAtom (EXP-03, D-08, V7) ─────────────────────────────────────
+// survival_floor = fixed_ex_food + Σ(monthlyAccruals) + foodFloorAtom.floor
+//
+// Phase 4 (04-04): floors.foodSeed is replaced by the computed food floor (V7).
+// foodFloorAtom is async (glob load + IDB reads on first access).
+//
+// Import direction: food.atoms → this file (expenses → food, never reverse).
+// Pitfall 4: food.atoms.ts does NOT import expenses.atoms.ts. One-way.
+//
+// Solvency math uses the PASSIVE floor (via income surplusAtom), NEVER the
+// defended line ($3,000) or average. survivalFloorAtom is the food-inclusive
+// monthly floor — the minimum income needed to avoid negative solvency.
+//
 // Pitfall 3: wrap in <Suspense> in any component that reads this atom.
 
 export const survivalFloorAtom = atom(async (get): Promise<number> => {
-  const floors = await get(floorsLoadAtom)
+  const { floor } = await get(foodFloorAtom)   // computed food floor replaces floors.foodSeed (V7)
   const fixedExFood = get(fixedExFoodAtom)
   const accruals = get(sinkingFundAccrualsAtom)
-  return fixedExFood + accruals + floors.foodSeed
+  return fixedExFood + accruals + floor
 })
 
 // ── Write atoms ────────────────────────────────────────────────────────────────
