@@ -247,6 +247,7 @@ describe('foodBadgeStatusAtom', () => {
     // Build a derived test atom that wraps foodFloorAtom but injects gaps
     const gappedFloorAtom = atom(async () => ({
       floor: 600,
+      solvencyFloor: 600,
       gaps: [{ type: 'stale-plan' as const, lastKnownDate: null }],
       isClean: false,
       planIsCurrent: false,
@@ -255,6 +256,7 @@ describe('foodBadgeStatusAtom', () => {
     // Verify the formula directly:
     const result: FoodFloorResult = await (async () => ({
       floor: 600,
+      solvencyFloor: 600,
       gaps: [{ type: 'stale-plan' as const, lastKnownDate: null }],
       isClean: false,
       planIsCurrent: false,
@@ -267,6 +269,7 @@ describe('foodBadgeStatusAtom', () => {
   it("returns 'clean' when foodFloorAtom has no gaps", () => {
     const result: FoodFloorResult = {
       floor: 550,
+      solvencyFloor: 550,
       gaps: [],
       isClean: true,
       planIsCurrent: true,
