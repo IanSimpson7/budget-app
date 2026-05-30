@@ -21,6 +21,14 @@ import {
   type SchemaV1Data,
   type SinkingFund,
 } from './schema'
+import {
+  normalizeMealName,
+  type MealDefinition,
+  type UnitCostEntry,
+  type PortionEntry,
+  type FoodFloorMeta,
+  type FlavorLine,
+} from '../domains/food/food.types'
 
 const FLOORS_KEY = 'floors'
 const KNOWN_SOURCES_KEY = 'knownSources'
@@ -169,6 +177,234 @@ export async function seedFundsIfEmpty(): Promise<void> {
     provisional: true,
   } as SinkingFund)
   await db.settings.put({ key: FUNDS_SEEDED_KEY, value: true })
+}
+
+// ── Meal Definition CRUD (FOOD-02, D-01) ─────────────────────────────────
+// app-owned meal→ingredient decomposition table. mealName is the SMC-join key;
+// normalizeMealName(s) ensures lowercase+trimmed for all stored names (Pitfall 5).
+
+export async function addMealDefinition(meal: Omit<MealDefinition, 'id'>): Promise<number> {
+  return db.mealDefinitions.add({ ...meal, mealName: normalizeMealName(meal.mealName) } as MealDefinition)
+}
+
+export async function listMealDefinitions(): Promise<MealDefinition[]> {
+  return db.mealDefinitions.toArray()
+}
+
+export async function updateMealDefinition(id: number, patch: Partial<MealDefinition>): Promise<void> {
+  const normalizedPatch = patch.mealName != null
+    ? { ...patch, mealName: normalizeMealName(patch.mealName) }
+    : patch
+  await db.mealDefinitions.update(id, normalizedPatch)
+}
+
+export async function deleteMealDefinition(id: number): Promise<void> {
+  await db.mealDefinitions.delete(id)
+}
+
+// Returns a Dexie Observable so atoms import storage, never db (grep gate).
+export function observeMealDefinitions(): Observable<MealDefinition[]> {
+  return liveQuery(() => db.mealDefinitions.toArray() as Promise<MealDefinition[]>)
+}
+
+// ── Food Settings Singletons (FOOD-04, FOOD-05, FOOD-10, FOOD-11, FOOD-13) ───
+// Each singleton is stored as a settings row with a const KEY constant.
+// Defaults are returned on first read (no migration data needed — D-01 no-op).
+// C1: NO setFoodFloor / decreaseFoodFloor method exists here (V6 absence-proof).
+// saveFoodFloorMeta persists only engine-written metadata, never a user-settable floor.
+
+const UNIT_COST_MAP_KEY = 'unitCostMap'
+const PORTION_MODEL_KEY = 'portionModel'
+const FOOD_FLOOR_META_KEY = 'foodFloorMeta'
+const FLAVOR_LINE_KEY = 'flavorLine'
+
+const DEFAULT_FOOD_FLOOR_META: FoodFloorMeta = {
+  lastComputedFloor: 0,
+  allTimeHighWater: 0,
+  lastRefinedFromReceipts: null,
+}
+const DEFAULT_FLAVOR_LINE: FlavorLine = { amount: 50 }  // seed ~$50/mo per spec §12
+
+// Unit-cost map: ingredient → { costPerUnit, unit, tag }
+// T-04-02: guard against non-finite costPerUnit before persisting.
+export async function getUnitCostMap(): Promise<UnitCostEntry[]> {
+  const row = await db.settings.get(UNIT_COST_MAP_KEY)
+  return (row?.value as UnitCostEntry[] | undefined) ?? []
+}
+
+export async function saveUnitCostMap(entries: UnitCostEntry[]): Promise<void> {
+  for (const entry of entries) {
+    if (!Number.isFinite(entry.costPerUnit)) {
+      throw new Error(`saveUnitCostMap: non-finite costPerUnit for "${entry.ingredientName}" (${entry.costPerUnit})`)
+    }
+  }
+  await db.settings.put({ key: UNIT_COST_MAP_KEY, value: entries })
+}
+
+// Portion model: ingredient → { portionSize }
+// T-04-02: guard against non-finite portionSize before persisting.
+export async function getPortionModel(): Promise<PortionEntry[]> {
+  const row = await db.settings.get(PORTION_MODEL_KEY)
+  return (row?.value as PortionEntry[] | undefined) ?? []
+}
+
+export async function savePortionModel(entries: PortionEntry[]): Promise<void> {
+  for (const entry of entries) {
+    if (!Number.isFinite(entry.portionSize)) {
+      throw new Error(`savePortionModel: non-finite portionSize for "${entry.ingredientName}" (${entry.portionSize})`)
+    }
+  }
+  await db.settings.put({ key: PORTION_MODEL_KEY, value: entries })
+}
+
+// Food floor metadata: engine-written last-computed + high-water + refinement timestamp.
+// C1 (V6): there is NO setFoodFloor method. saveFoodFloorMeta persists only metadata.
+export async function getFoodFloorMeta(): Promise<FoodFloorMeta> {
+  const row = await db.settings.get(FOOD_FLOOR_META_KEY)
+  return (row?.value as FoodFloorMeta | undefined) ?? DEFAULT_FOOD_FLOOR_META
+}
+
+export async function saveFoodFloorMeta(meta: FoodFloorMeta): Promise<void> {
+  await db.settings.put({ key: FOOD_FLOOR_META_KEY, value: meta })
+}
+
+// Flavor line: separate ~$50/mo PROTECTED fixed amount (FOOD-10, D-05).
+// T-04-02: guard against non-finite amount before persisting.
+export async function getFlavorLine(): Promise<FlavorLine> {
+  const row = await db.settings.get(FLAVOR_LINE_KEY)
+  return (row?.value as FlavorLine | undefined) ?? DEFAULT_FLAVOR_LINE
+}
+
+export async function saveFlavorLine(line: FlavorLine): Promise<void> {
+  if (!Number.isFinite(line.amount)) {
+    throw new Error(`saveFlavorLine: non-finite amount (${line.amount})`)
+  }
+  await db.settings.put({ key: FLAVOR_LINE_KEY, value: line })
+}
+
+// ── First-run seed for meal definitions (FOOD-02 + I-04) ──────────────────────
+// Seeds 14 known meal-name strings (normalized), sets up the initial unit-cost map
+// with known §5c warehouse-club values, and seeds a portion model starting point.
+// Sentinel-guarded so repeated calls are no-ops after the first run (Pitfall 4 avoidance).
+//
+// I-07 decision: known ingredient synonyms are pre-normalized here before storage.
+// "PB" → "peanut butter" is applied in the ingredient arrays below. Other synonyms
+// encountered in the future can be handled by Ian via /food/config manual mapping.
+// Any unmapped synonyms will surface as unpriced-ingredient gap flags — expected
+// noise, never silent undercount (C1 compliant via fallback-high, D-02).
+
+const MEALS_SEEDED_KEY = 'mealDefinitionsSeeded'
+
+// 14 known meal-name strings from the live SMC corpus (2026-05-29), normalized.
+// ingredients[] lists the macro-bearing ingredients for decomposed meals.
+// "Qdoba bowl" is the non-decomposable flat-cost test case (D-04); flatCost left
+// unset so it triggers the fallback-high gap flag until Ian sets it via /food/config.
+const SEED_MEAL_DEFINITIONS: Omit<MealDefinition, 'id'>[] = [
+  {
+    mealName: normalizeMealName('Cereal and milk'),
+    type: 'decomposed',
+    ingredients: ['cereal', 'milk'],
+  },
+  {
+    mealName: normalizeMealName('Chicken, rice, and broccoli'),
+    type: 'decomposed',
+    ingredients: ['chicken breast', 'rice', 'broccoli'],
+  },
+  {
+    mealName: normalizeMealName('Eggs and PB toast'),
+    type: 'decomposed',
+    // I-07: "PB" normalized to "peanut butter" before storage
+    ingredients: ['eggs', 'peanut butter', 'bread'],
+  },
+  {
+    mealName: normalizeMealName('French Toast and Eggs'),
+    type: 'decomposed',
+    ingredients: ['eggs', 'bread', 'milk'],
+  },
+  {
+    mealName: normalizeMealName('Greek yogurt with granola and berries'),
+    type: 'decomposed',
+    ingredients: ['greek yogurt', 'granola', 'mixed berries'],
+  },
+  {
+    mealName: normalizeMealName('Oatmeal and protein slop'),
+    type: 'decomposed',
+    ingredients: ['oats', 'bulk whey', 'milk'],
+  },
+  {
+    mealName: normalizeMealName('Oatmeal cream pie and banana'),
+    type: 'decomposed',
+    ingredients: ['oatmeal cream pie', 'banana'],
+  },
+  {
+    mealName: normalizeMealName('Pasta, beef, cheese, green beans'),
+    type: 'decomposed',
+    ingredients: ['pasta', '90/10 ground beef', 'cheese', 'green beans'],
+  },
+  {
+    mealName: normalizeMealName('Protein Slop and Granola'),
+    type: 'decomposed',
+    ingredients: ['bulk whey', 'granola', 'milk'],
+  },
+  {
+    mealName: normalizeMealName('Protein shake and banana'),
+    type: 'decomposed',
+    ingredients: ['bulk whey', 'milk', 'banana'],
+  },
+  {
+    mealName: normalizeMealName('Qdoba bowl'),
+    type: 'flat-cost',
+    ingredients: [],
+    // flatCost intentionally unset → triggers fallback-high gap flag (D-04)
+  },
+  {
+    mealName: normalizeMealName('Rice cakes with peanut butter and banana'),
+    type: 'decomposed',
+    // I-07: "peanut butter" is canonical (no synonym to map here)
+    ingredients: ['rice cakes', 'peanut butter', 'banana'],
+  },
+  {
+    mealName: normalizeMealName('Sweet potato, beef, cheese, green beans'),
+    type: 'decomposed',
+    ingredients: ['sweet potato', '90/10 ground beef', 'cheese', 'green beans'],
+  },
+  {
+    mealName: normalizeMealName('Turkey sandwich with cheese and green beans'),
+    type: 'decomposed',
+    ingredients: ['turkey', 'cheese', 'bread', 'green beans'],
+  },
+]
+
+// Initial unit-cost map seed (§5c, warehouse-club prices).
+// I-04: "bulk whey" is tagged macro-bearing so whey-bearing meals price immediately
+// without an unpriced-ingredient gap (EXP-07 handoff from Phase 3).
+// All entries default to 'macro-bearing' (C1/I-05 default — never 'flavor-condiment').
+const SEED_UNIT_COST_MAP: UnitCostEntry[] = [
+  { ingredientName: 'bulk whey', costPerUnit: 0.50, unit: 'oz', tag: 'macro-bearing' },
+  { ingredientName: '90/10 ground beef', costPerUnit: 5.80, unit: 'lb', tag: 'macro-bearing' },
+  { ingredientName: 'chicken breast', costPerUnit: 2.00, unit: 'lb', tag: 'macro-bearing' },
+]
+
+export async function seedMealDefinitionsIfEmpty(): Promise<void> {
+  const sentinelRow = await db.settings.get(MEALS_SEEDED_KEY)
+  if (sentinelRow !== undefined) return  // already seeded via this function — do not clobber Ian's edits
+  // Also skip if any meal rows already exist (added manually or via import)
+  const existing = await db.mealDefinitions.count()
+  if (existing > 0) return
+  for (const meal of SEED_MEAL_DEFINITIONS) {
+    await db.mealDefinitions.add({ ...meal } as MealDefinition)
+  }
+  // Seed initial unit-cost map with known macro-bearing values (I-04, EXP-07 handoff)
+  const existingMap = await getUnitCostMap()
+  if (existingMap.length === 0) {
+    await saveUnitCostMap(SEED_UNIT_COST_MAP)
+  }
+  // Seed flavorLine with the default value so it's persisted from the start
+  const existingFlavor = await db.settings.get(FLAVOR_LINE_KEY)
+  if (existingFlavor === undefined) {
+    await db.settings.put({ key: FLAVOR_LINE_KEY, value: DEFAULT_FLAVOR_LINE })
+  }
+  await db.settings.put({ key: MEALS_SEEDED_KEY, value: true })
 }
 
 // ── Known-source settings (D-06) ──────────────────────────────────────────
@@ -321,12 +557,13 @@ export async function importAll(file: File): Promise<void> {
 async function replaceAll(data: SchemaV1Data): Promise<void> {
   await db.transaction(
     'rw',
-    [db.incomeChecks, db.expenseItems, db.sinkingFunds, db.accounts, db.settings],
+    [db.incomeChecks, db.expenseItems, db.sinkingFunds, db.mealDefinitions, db.accounts, db.settings],
     async () => {
       await Promise.all([
         db.incomeChecks.clear(),
         db.expenseItems.clear(),
         db.sinkingFunds.clear(),
+        db.mealDefinitions.clear(),
         db.accounts.clear(),
         db.settings.clear(),
       ])
@@ -361,6 +598,14 @@ async function replaceAll(data: SchemaV1Data): Promise<void> {
           }
           const { id: _id, ...rest } = raw
           await db.sinkingFunds.add(rest as SinkingFund)
+        }
+      }
+      // Restore meal definition rows (T-04-03: Array.isArray guard prevents partial-state
+      // corruption from a malformed mealDefinitions payload).
+      if (Array.isArray(data.mealDefinitions) && data.mealDefinitions.length > 0) {
+        for (const raw of data.mealDefinitions as MealDefinition[]) {
+          const { id: _id, ...rest } = raw
+          await db.mealDefinitions.add(rest as MealDefinition)
         }
       }
     },
