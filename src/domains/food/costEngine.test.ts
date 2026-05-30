@@ -3,6 +3,7 @@
  * V3: fallback-high on all three gap triggers (unpriced ingredient, undefined meal, unset flat cost)
  * V4: monthly floor derivation (daily-average × daysInMonth; 1-day and 7-day windows)
  * V5: never-lower stale path — isPlanCurrent + fallbackFloor
+ * V6: kind-aware fallback ceiling — classifyMealKind, FALLBACK_CEILING_MEAL, FALLBACK_CEILING_SNACK
  *
  * C1-CRITICAL: every gap path MUST contribute FALLBACK_CEILING_PER_MEAL to the daily sum,
  * never $0 and never a partial undercount. Restriction is the BED clinical trigger.
@@ -13,6 +14,9 @@ import {
   isPlanCurrent,
   fallbackFloor,
   FALLBACK_CEILING_PER_MEAL,
+  FALLBACK_CEILING_MEAL,
+  FALLBACK_CEILING_SNACK,
+  classifyMealKind,
 } from './costEngine'
 import type {
   CostEngineInput,
@@ -520,5 +524,153 @@ describe('Pitfall 7 — high-water does not ratchet live floor', () => {
     // The two are completely independent functions
     expect(result.floor).not.toBe(fallback)
     expect(result.floor).toBeCloseTo(expectedFloor, 5) // unchanged
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// V6 — FALLBACK_CEILING_MEAL and FALLBACK_CEILING_SNACK constants
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('FALLBACK_CEILING_MEAL / FALLBACK_CEILING_SNACK constants', () => {
+  it('FALLBACK_CEILING_MEAL is 15 (full-meal ceiling, unchanged)', () => {
+    expect(FALLBACK_CEILING_MEAL).toBe(15)
+  })
+
+  it('FALLBACK_CEILING_SNACK is 5 (snack/shake/light occasion ceiling)', () => {
+    expect(FALLBACK_CEILING_SNACK).toBe(5)
+  })
+
+  it('FALLBACK_CEILING_PER_MEAL (back-compat alias) equals FALLBACK_CEILING_MEAL', () => {
+    expect(FALLBACK_CEILING_PER_MEAL).toBe(FALLBACK_CEILING_MEAL)
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// V6 — classifyMealKind: 14-meal corpus coverage
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('classifyMealKind — corpus coverage', () => {
+  // Snack corpus — exactly 6 entries from the 14-meal corpus that classify as snack
+  it.each([
+    ['Cereal and milk',                             'snack'],  // contains 'cereal'
+    ['Greek yogurt with granola and berries',        'snack'],  // contains 'yogurt', 'granola'
+    ['Oatmeal cream pie and banana',                 'snack'],  // contains 'cream pie'
+    ['Protein shake and banana',                     'snack'],  // contains 'shake'
+    ['Protein Slop and Granola',                     'snack'],  // contains 'granola'
+    ['Rice cakes with peanut butter and banana',     'snack'],  // contains 'rice cake'
+  ])('classifyMealKind(%s) === %s', (mealName, expected) => {
+    expect(classifyMealKind(mealName)).toBe(expected)
+  })
+
+  // Meal corpus — all remaining 8 entries classify as 'meal'
+  it.each([
+    ['Chicken, rice, and broccoli',                  'meal'],
+    ['Eggs and PB toast',                            'meal'],
+    ['French Toast and Eggs',                        'meal'],
+    ['Oatmeal and protein slop',                     'meal'],
+    ['Pasta, beef, cheese, green beans',             'meal'],
+    ['Qdoba bowl',                                   'meal'],
+    ['Sweet potato, beef, cheese, green beans',      'meal'],
+    ['Turkey sandwich with cheese and green beans',  'meal'],
+  ])('classifyMealKind(%s) === %s', (mealName, expected) => {
+    expect(classifyMealKind(mealName)).toBe(expected)
+  })
+
+  it('unknown/arbitrary name defaults to meal (conservative)', () => {
+    expect(classifyMealKind('completely unknown dish')).toBe('meal')
+    expect(classifyMealKind('')).toBe('meal')
+  })
+
+  it('matching is case-insensitive (normalized via lowercase)', () => {
+    expect(classifyMealKind('PROTEIN SHAKE')).toBe('snack')
+    expect(classifyMealKind('Greek YOGURT bowl')).toBe('snack')
+    expect(classifyMealKind('RICE CAKE crumble')).toBe('snack')
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// V6 — kind-aware fallback in computeFloor
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('computeFloor — V6 kind-aware fallback', () => {
+  it('snack-classified undefined meal contributes FALLBACK_CEILING_SNACK (5), not 15', () => {
+    const input = makeInput({
+      scheduledMeals: ['protein shake and banana'],
+      mealDefinitions: [], // undefined → fallback path
+      windowDays: 1,
+      daysInMonth: 30,
+    })
+    const result = computeFloor(input)
+    expect(result.floor).toBeCloseTo(FALLBACK_CEILING_SNACK * 30, 5)
+    expect(result.isClean).toBe(false)
+    const gap = result.gaps.find((g): g is Extract<FloorGap, { type: 'undefined-meal' }> => g.type === 'undefined-meal')
+    expect(gap).toBeDefined()
+    expect(gap?.mealName).toBe('protein shake and banana')
+  })
+
+  it('meal-classified undefined meal contributes FALLBACK_CEILING_MEAL (15)', () => {
+    const input = makeInput({
+      scheduledMeals: ['qdoba bowl'],
+      mealDefinitions: [], // undefined → fallback path
+      windowDays: 1,
+      daysInMonth: 30,
+    })
+    const result = computeFloor(input)
+    expect(result.floor).toBeCloseTo(FALLBACK_CEILING_MEAL * 30, 5)
+    expect(result.isClean).toBe(false)
+  })
+
+  it('snack with unpriced ingredient falls back at FALLBACK_CEILING_SNACK (C1: never $0)', () => {
+    // C1 regression: snack fallback is never $0 — just lower than the full-meal ceiling
+    const snackDef: MealDefinition = {
+      mealName: 'cereal and milk',
+      type: 'decomposed',
+      ingredients: ['cereal', 'milk'], // unpriced ingredients
+    }
+    const input = makeInput({
+      scheduledMeals: ['cereal and milk'],
+      mealDefinitions: [snackDef],
+      unitCostMap: [], // no pricing
+      portionModel: [],
+      windowDays: 1,
+      daysInMonth: 30,
+    })
+    const result = computeFloor(input)
+    // Must NOT be $0 (C1) — uses snack ceiling
+    expect(result.floor).toBeGreaterThan(0)
+    expect(result.floor).toBeCloseTo(FALLBACK_CEILING_SNACK * 30, 5)
+    expect(result.isClean).toBe(false)
+  })
+
+  it('snack with unset flat cost falls back at FALLBACK_CEILING_SNACK', () => {
+    const snackFlatDef: MealDefinition = {
+      mealName: 'protein shake and banana',
+      type: 'flat-cost',
+      ingredients: [],
+      // flatCost deliberately omitted
+    }
+    const input = makeInput({
+      scheduledMeals: ['protein shake and banana'],
+      mealDefinitions: [snackFlatDef],
+      windowDays: 1,
+      daysInMonth: 30,
+    })
+    const result = computeFloor(input)
+    expect(result.floor).toBeCloseTo(FALLBACK_CEILING_SNACK * 30, 5)
+    expect(result.isClean).toBe(false)
+  })
+
+  it('mixed snack + meal schedule: each contributes its respective ceiling when gapped', () => {
+    // 1 snack gapped + 1 meal gapped in a 2-day window
+    const input = makeInput({
+      scheduledMeals: ['protein shake and banana', 'qdoba bowl'],
+      mealDefinitions: [], // both undefined
+      windowDays: 2,
+      daysInMonth: 30,
+    })
+    const result = computeFloor(input)
+    const totalCost = FALLBACK_CEILING_SNACK + FALLBACK_CEILING_MEAL
+    const expectedFloor = (totalCost / 2) * 30
+    expect(result.floor).toBeCloseTo(expectedFloor, 5)
   })
 })
