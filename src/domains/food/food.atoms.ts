@@ -42,8 +42,15 @@
 //   Grep gate: `grep -c "storage/db"` in this file returns 0.
 //   Grep gate: food.atoms.ts does NOT import from expenses.atoms.ts (Pitfall 4).
 //
-// Pitfall 7 isolation: high-water only governs the STALE path. computeFloor output
-//   is the LIVE floor regardless of high-water when planIsCurrent.
+// CR-01 Reading A (ratified by Ian 2026-05-30): the DISPLAYED live floor is ratcheted
+//   up to allTimeHighWater on BOTH clean-live and gapped-live paths.
+//   Rationale: a displayed food floor that visibly falls month-over-month is the
+//   restriction signal C1 forbids — even a shorter month (28 vs 31 days) with identical
+//   meals lowers the raw computed floor. The ratchet prevents this.
+//   High-water is written ONLY on clean results (I-03) so it is always a real
+//   (never fallback-inflated) value — safe to clamp the display to it.
+//   solvencyFloor (the solvency consumer) is NOT ratcheted — it stays realistic.
+//   The write-back still uses result.floor (the raw computed value), not the clamped display.
 //
 // I-02 (HARD V8): In DEV mode, a console.error fires if the glob resolves to 0 files.
 //   A wrong path depth silently returns {} and is indistinguishable from the intended
@@ -291,6 +298,8 @@ export const foodFloorAtom = atom(async (get): Promise<FoodFloorResult> => {
   }
 
   // I-03 WRITE-BACK: persist metadata ONLY on a clean (gap-free) result.
+  // High-water write-back uses result.floor (the RAW computed value) — NOT the clamped
+  // display floor. This ensures allTimeHighWater is always a real, uninfluenced value.
   // High-water uses Math.max — never decreases (C1 invariant).
   if (result.isClean) {
     const newMeta: FoodFloorMeta = {
@@ -305,8 +314,15 @@ export const foodFloorAtom = atom(async (get): Promise<FoodFloorResult> => {
     })
   }
 
+  // CR-01 (Reading A, ratified 2026-05-30): clamp the DISPLAYED floor to allTimeHighWater.
+  // A shorter month, a leaner plan, or a downward portion edit must never make the
+  // displayed protected floor drop — that drop is the restriction signal C1 forbids.
+  // solvencyFloor is NOT clamped — it stays realistic for the solvency consumer.
+  // write-back above uses result.floor (real computed), not displayedFloor.
+  const displayedFloor = Math.max(result.floor, meta.allTimeHighWater ?? 0)
+
   return {
-    floor: result.floor,
+    floor: displayedFloor,
     solvencyFloor,
     gaps: result.gaps,
     isClean: result.isClean,
