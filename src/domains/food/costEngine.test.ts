@@ -396,37 +396,37 @@ describe('computeFloor — gap deduplication', () => {
 
 describe('isPlanCurrent — D-08 staleness detection', () => {
   it('today falls within a plan window → true', () => {
-    const plans = [{ windowStart: '2026-05-01', windowEnd: '2026-05-31', meals: [] }]
+    const plans = [{ windowStart: '2026-05-01', windowEnd: '2026-05-31', meals: [], mealDays: 31 }]
     expect(isPlanCurrent(plans, '2026-05-15')).toBe(true)
   })
 
   it('today is on windowStart boundary → true (inclusive)', () => {
-    const plans = [{ windowStart: '2026-05-25', windowEnd: '2026-05-31', meals: [] }]
+    const plans = [{ windowStart: '2026-05-25', windowEnd: '2026-05-31', meals: [], mealDays: 7 }]
     expect(isPlanCurrent(plans, '2026-05-25')).toBe(true)
   })
 
   it('today is on windowEnd boundary → true (inclusive)', () => {
-    const plans = [{ windowStart: '2026-05-25', windowEnd: '2026-05-31', meals: [] }]
+    const plans = [{ windowStart: '2026-05-25', windowEnd: '2026-05-31', meals: [], mealDays: 7 }]
     expect(isPlanCurrent(plans, '2026-05-31')).toBe(true)
   })
 
   it('today is before windowStart → false', () => {
-    const plans = [{ windowStart: '2026-05-25', windowEnd: '2026-05-31', meals: [] }]
+    const plans = [{ windowStart: '2026-05-25', windowEnd: '2026-05-31', meals: [], mealDays: 7 }]
     expect(isPlanCurrent(plans, '2026-05-24')).toBe(false)
   })
 
   it('today is after windowEnd → false', () => {
-    const plans = [{ windowStart: '2026-05-25', windowEnd: '2026-05-31', meals: [] }]
+    const plans = [{ windowStart: '2026-05-25', windowEnd: '2026-05-31', meals: [], mealDays: 7 }]
     expect(isPlanCurrent(plans, '2026-06-01')).toBe(false)
   })
 
   it('single-day window (windowStart === windowEnd): today matches → true', () => {
-    const plans = [{ windowStart: '2026-05-21', windowEnd: '2026-05-21', meals: [] }]
+    const plans = [{ windowStart: '2026-05-21', windowEnd: '2026-05-21', meals: [], mealDays: 1 }]
     expect(isPlanCurrent(plans, '2026-05-21')).toBe(true)
   })
 
   it('single-day window: different day → false', () => {
-    const plans = [{ windowStart: '2026-05-21', windowEnd: '2026-05-21', meals: [] }]
+    const plans = [{ windowStart: '2026-05-21', windowEnd: '2026-05-21', meals: [], mealDays: 1 }]
     expect(isPlanCurrent(plans, '2026-05-22')).toBe(false)
   })
 
@@ -436,8 +436,8 @@ describe('isPlanCurrent — D-08 staleness detection', () => {
 
   it('multiple plans: today in any one window → true', () => {
     const plans = [
-      { windowStart: '2026-05-01', windowEnd: '2026-05-07', meals: [] },
-      { windowStart: '2026-05-15', windowEnd: '2026-05-21', meals: [] },
+      { windowStart: '2026-05-01', windowEnd: '2026-05-07', meals: [], mealDays: 7 },
+      { windowStart: '2026-05-15', windowEnd: '2026-05-21', meals: [], mealDays: 7 },
     ]
     expect(isPlanCurrent(plans, '2026-05-16')).toBe(true)
     expect(isPlanCurrent(plans, '2026-05-10')).toBe(false)

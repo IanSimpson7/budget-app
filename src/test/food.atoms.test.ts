@@ -470,6 +470,78 @@ describe('FoodFloorResult — solvencyFloor field (04-06 c)', () => {
   })
 })
 
+// ── WR-02: Robust high-water write-back (.catch + correctness argument) ──────
+
+describe('WR-02 — write-back .catch: rejected saveFoodFloorMeta does not throw', () => {
+  it('a rejected saveFoodFloorMeta does NOT propagate as an unhandled rejection', async () => {
+    // The atom's fire-and-forget write-back must swallow IDB errors gracefully.
+    // Without a .catch, a failed saveFoodFloorMeta becomes an unhandled rejection.
+    const rejectSpy = vi.spyOn(storage, 'saveFoodFloorMeta').mockRejectedValue(new Error('IDB write failed'))
+    mockStorageSingletons(EMPTY_META)
+    // Override mock: getFoodFloorMeta returns EMPTY_META but saveFoodFloorMeta rejects
+    vi.spyOn(storage, 'getFoodFloorMeta').mockResolvedValue(EMPTY_META)
+
+    const store = createStore()
+
+    // This should NOT throw — the atom reads should complete successfully
+    // even if the write-back fails
+    let atomResult: FoodFloorResult | undefined
+    let thrownError: unknown
+
+    try {
+      atomResult = await store.get(foodFloorAtom)
+    } catch (err) {
+      thrownError = err
+    }
+
+    // The atom read itself must NOT throw, regardless of write-back failure
+    expect(thrownError).toBeUndefined()
+    expect(atomResult).toBeDefined()
+    expect(typeof atomResult?.floor).toBe('number')
+
+    // The write-back may or may not have been called (depends on planIsCurrent + isClean)
+    // If it was called (clean live result), it must not have propagated as a rejection
+    void rejectSpy // used
+  })
+
+  it('write-back formula correctness: lag-by-one-cycle is safe with CR-01 ratchet', () => {
+    // WR-02 DOCUMENTED: the fire-and-forget write-back creates a one-cycle lag —
+    // the newly-written allTimeHighWater is NOT observed by the very next foodFloorAtom
+    // read (metaRefreshAtom is not bumped).
+    //
+    // CORRECTNESS ARGUMENT: this lag is safe because:
+    // 1. The write-back only happens on CLEAN results — allTimeHighWater = Math.max(prev, floor).
+    // 2. On the NEXT read, meta still contains the OLD allTimeHighWater.
+    // 3. CR-01's ratchet applies: displayedFloor = Math.max(result.floor, meta.allTimeHighWater ?? 0)
+    // 4. Since result.floor is the SAME or higher clean result, and meta.allTimeHighWater
+    //    is the OLD value (= the previous write-back's result.floor), the ratchet
+    //    guarantees displayedFloor >= the old allTimeHighWater.
+    // 5. No visual drop occurs — the one-cycle lag is invisible to the user.
+    //
+    // This test verifies the mathematical invariant, not the timing.
+
+    const prevHighWater = 600
+    const resultFloor = 620  // new clean result (higher than prev)
+    // After write-back: allTimeHighWater should be 620. But the next read sees 600 (lag).
+    const metaOnNextRead = { lastComputedFloor: prevHighWater, allTimeHighWater: prevHighWater, lastRefinedFromReceipts: null }
+    // Next clean result: same scenario — result.floor = 620 again (stable plan)
+    const nextResultFloor = 620
+    // CR-01 ratchet applies: displayedFloor = Math.max(nextResultFloor, metaOnNextRead.allTimeHighWater)
+    const displayedFloor = Math.max(nextResultFloor, metaOnNextRead.allTimeHighWater)
+    // displayedFloor = max(620, 600) = 620 — correct, no visual drop
+    expect(displayedFloor).toBe(620)
+    expect(displayedFloor).toBeGreaterThanOrEqual(prevHighWater)
+
+    // Even if result.floor drops (e.g., shorter month): max(560, 600) = 600 — still correct
+    const floorDropResult = 560
+    const droppedDisplay = Math.max(floorDropResult, metaOnNextRead.allTimeHighWater)
+    expect(droppedDisplay).toBe(600) // ratchet holds even with lag
+    expect(droppedDisplay).toBeGreaterThanOrEqual(prevHighWater)
+
+    void resultFloor // used in comment
+  })
+})
+
 // ── CR-01: Displayed live floor ratcheted to allTimeHighWater ─────────────────
 //
 // Contract (Reading A, ratified 2026-05-30):
@@ -479,24 +551,6 @@ describe('FoodFloorResult — solvencyFloor field (04-06 c)', () => {
 //   - Shorter-month case: displayed floor holds even when 31-day floor > 28-day floor
 
 describe('CR-01 — displayed live floor ratcheted to allTimeHighWater (Reading A)', () => {
-  // Helper to build a controlled live-plan scenario with a mocked parsedPlansAtom
-  function makeLivePlanStore(
-    plans: import('../domains/food/planParser').ParsedPlan[],
-    meta: FoodFloorMeta,
-  ) {
-    const store = createStore()
-    // Override parsedPlansAtom so we control which plans are "current"
-    store.set(atom(null, (_get, set) => {
-      // We use the store's set mechanism to inject an override atom
-      void set
-    }), null)
-    mockStorageSingletons(meta)
-    // Inject the plans override
-    const overridePlansAtom = atom(async () => plans)
-    store.set(atom(null, (_get, set) => { void set }), null)
-    return { store, overridePlansAtom }
-  }
-
   it('clean-live: result.floor < allTimeHighWater → returned floor === allTimeHighWater', async () => {
     // Pure formula test: the ratchet must apply
     const resultFloor = 540

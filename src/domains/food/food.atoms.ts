@@ -315,10 +315,22 @@ export const foodFloorAtom = atom(async (get): Promise<FoodFloorResult> => {
       lastComputedFloor: result.floor,
       allTimeHighWater: Math.max(meta.allTimeHighWater, result.floor),
     }
-    // Fire-and-forget — we do not await so the derived atom stays pure-ish
-    void storage.saveFoodFloorMeta(newMeta).then(() => {
-      // bump meta counter so next read reflects the saved value
-      // (store.set not available in atom body; bump is handled by write atoms)
+    // WR-02: Fire-and-forget write-back with .catch to prevent unhandled rejection.
+    // An IDB failure (quota, blocked upgrade, closed connection) must not surface as
+    // an unhandled promise rejection — it is silently swallowed here since the next
+    // read will recompute from storage and the CR-01 ratchet ensures correctness.
+    //
+    // WR-02 LAG NOTE: This fire-and-forget write does NOT bump metaRefreshAtom, so the
+    // newly-written allTimeHighWater is NOT observed by the very next foodFloorAtom read.
+    // CORRECTNESS ARGUMENT: the lag is safe because CR-01's ratchet (Task 1) applies on
+    // every live read: displayedFloor = Math.max(result.floor, meta.allTimeHighWater ?? 0).
+    // Since result.floor and the old meta.allTimeHighWater together clamp the display up,
+    // no visual drop occurs during the one-cycle lag. The ratchet is strictly conservative.
+    void storage.saveFoodFloorMeta(newMeta).catch((err: unknown) => {
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.warn('[food.atoms] WR-02: saveFoodFloorMeta write-back failed (swallowed):', err)
+      }
     })
   }
 
