@@ -273,7 +273,15 @@ export const foodFloorAtom = atom(async (get): Promise<FoodFloorResult> => {
   })
 
   const scheduledMeals = selectedPlan.meals
-  const windowDays = Math.max(planDaySpan(selectedPlan), 1)
+
+  // CR-02 (C1): use mealDays (distinct days-with-meals) as the daily-average denominator.
+  // planDaySpan (raw calendar span) is kept ONLY for the overlap-selection reduce above.
+  // A plan window wider than its meal list would divide total cost by too many days,
+  // understating dailyAverage and therefore the monthly floor — a C1 failure.
+  // C1-conservative direction: dividing by a smaller mealDays raises the daily average.
+  // Math.max(..., 1) guards against a 0 mealDays value (should not occur for a plan with
+  // meals, but defensive guard prevents division-by-zero in computeFloor).
+  const windowDays = Math.max(selectedPlan.mealDays, 1)
 
   const result = computeFloor({
     scheduledMeals,

@@ -23,6 +23,17 @@ export interface ParsedPlan {
   windowEnd: string
   /** Normalized meal-name strings (normalizeMealName applied), one per scheduled slot. */
   meals: string[]
+  /**
+   * CR-02 (C1): count of DISTINCT calendar days with >= 1 meal slot.
+   * This is the correct denominator for dailyAverage in costEngine.computeFloor.
+   * Using the raw calendar span (windowEnd - windowStart + 1) instead would overcount
+   * and understate the daily average — a C1 failure (floor understated).
+   *
+   * - Single-date plans: mealDays = 1 (windowStart === windowEnd)
+   * - Batch plans: count distinct YYYY-MM-DD section headers that carry >= 1 meal
+   * - 0 only if the plan has no meals at all (caller must guard with Math.max(mealDays, 1))
+   */
+  mealDays: number
 }
 
 /** Result of tokenizing a meal name into its constituent ingredient tokens. */
@@ -72,6 +83,17 @@ const TABLE_HEADER_RE = /^\|\s*#\s*\|\s*Time\s*\|\s*Meal\s*\|\s*Selector\s*\|/i
 
 /** **Food:** prose line per slot. Group 1 = meal string (global match in extractMealsFromProse). */
 const FOOD_PROSE_GLOBAL_RE = /^\*\*Food:\*\*\s*(.+)$/gm
+
+/**
+ * CR-02: Section header that carries a YYYY-MM-DD date — used to count distinct meal-days.
+ * Matches `## YYYY-MM-DD` (prose batch) and `## DayName YYYY-MM-DD` (table batch).
+ * Group 1 = YYYY-MM-DD string.
+ * Both formats appear in the SMC fixtures:
+ *   Table batch:  `## Monday 2026-05-25`
+ *   Prose batch:  `## 2026-05-29 (Friday)`
+ * Global flag required for iterating all matches.
+ */
+const DAY_SECTION_GLOBAL_RE = /^##\s+(?:\w+\s+)?(\d{4}-\d{2}-\d{2})/gm
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -223,6 +245,65 @@ function extractMealsFromProse(raw: string): string[] | null {
   return meals.length > 0 ? meals : null
 }
 
+// ── CR-02 helpers ─────────────────────────────────────────────────────────────
+
+/**
+ * Compute mealDays: the number of distinct calendar days that have >= 1 meal slot.
+ *
+ * CR-02 (C1): this is the correct denominator for computeFloor's dailyAverage.
+ * Using the raw calendar span (windowEnd - windowStart + 1) would overcount gap/empty
+ * days and understate the daily average — a C1 failure.
+ *
+ * Strategy:
+ *   1. Split raw content into day-sections by `## ... YYYY-MM-DD ...` headers.
+ *   2. For each section, check whether it contains at least one meal (table row OR Food: prose).
+ *   3. Count distinct YYYY-MM-DD values that have meals.
+ *   4. If no day-section headers found (single-date file), return 1 when meals exist,
+ *      or 0 when meals is empty (caller guards with Math.max(mealDays, 1)).
+ */
+function computeMealDays(raw: string, meals: string[]): number {
+  if (meals.length === 0) return 0
+
+  // Reset global regex state
+  DAY_SECTION_GLOBAL_RE.lastIndex = 0
+
+  // Find all day-section positions in the raw content
+  const sectionMatches: Array<{ date: string; startPos: number }> = []
+  let m: RegExpExecArray | null
+  while ((m = DAY_SECTION_GLOBAL_RE.exec(raw)) !== null) {
+    const date = m[1]
+    if (date) {
+      sectionMatches.push({ date, startPos: m.index })
+    }
+  }
+
+  // If no day-section headers found, this is a single-day file
+  // (or a file that doesn't use per-day headers). mealDays = 1 since we know meals exist.
+  if (sectionMatches.length === 0) {
+    return 1
+  }
+
+  // For each section, extract the content up to the next section header
+  const datesWithMeals = new Set<string>()
+
+  for (let i = 0; i < sectionMatches.length; i++) {
+    const section = sectionMatches[i]!
+    const nextSection = sectionMatches[i + 1]
+    const sectionStart = section.startPos
+    const sectionEnd = nextSection ? nextSection.startPos : raw.length
+    const sectionContent = raw.slice(sectionStart, sectionEnd)
+
+    // Check if this section has at least one meal (table row OR **Food:** line)
+    const hasTableMeal = extractMealsFromTable(sectionContent) !== null
+    const hasProseMeal = extractMealsFromProse(sectionContent) !== null
+    if (hasTableMeal || hasProseMeal) {
+      datesWithMeals.add(section.date)
+    }
+  }
+
+  return datesWithMeals.size
+}
+
 // ── Main export ───────────────────────────────────────────────────────────────
 
 /**
@@ -252,10 +333,15 @@ export function parsePlanFile(filename: string, raw: string): ParsedPlan | null 
     // No meals extracted = not a useful plan (return null, triggers fallback-high)
     if (!meals || meals.length === 0) return null
 
+    // CR-02: compute mealDays — distinct calendar days with >= 1 meal.
+    // This is the C1-correct denominator for dailyAverage in computeFloor.
+    const mealDays = computeMealDays(raw, meals)
+
     return {
       windowStart: window.windowStart,
       windowEnd: window.windowEnd,
       meals,
+      mealDays,
     }
   } catch {
     // Defensive: any unexpected error → null (T-04-05, T-04-06)

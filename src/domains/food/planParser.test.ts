@@ -273,6 +273,100 @@ describe('parsePlanFile — null path (malformed input)', () => {
   })
 })
 
+// ── CR-02: ParsedPlan.mealDays — distinct days with meals ────────────────────
+//
+// Contract:
+//   - mealDays: number of distinct calendar days with >= 1 meal slot
+//   - Single-date plans: mealDays = 1 (one day, one window)
+//   - Batch plans: count distinct YYYY-MM-DD section headers that carry meals
+//   - mealDays <= calendar span; mealDays >= 1 for any plan with meals
+//   - A window with a gap day yields mealDays < span
+describe('ParsedPlan.mealDays — CR-02 distinct days with meals', () => {
+  it('single-date fixture 2026-05-18: mealDays === 1', () => {
+    const filename = '2026-05-18.md'
+    const raw = FIXTURES[filename]!
+    const result = parsePlanFile(filename, raw) as ParsedPlan
+    expect(result.mealDays).toBe(1)
+  })
+
+  it('single-date fixture 2026-05-19: mealDays === 1', () => {
+    const filename = '2026-05-19.md'
+    const raw = FIXTURES[filename]!
+    const result = parsePlanFile(filename, raw) as ParsedPlan
+    expect(result.mealDays).toBe(1)
+  })
+
+  it('single-date fixture 2026-05-21: mealDays === 1', () => {
+    const filename = '2026-05-21.md'
+    const raw = FIXTURES[filename]!
+    const result = parsePlanFile(filename, raw) as ParsedPlan
+    expect(result.mealDays).toBe(1)
+  })
+
+  it('batch table fixture 2026-05-25--2026-05-28: mealDays === 4 (4 days with meals)', () => {
+    const filename = '2026-05-25--2026-05-28.md'
+    const raw = FIXTURES[filename]!
+    const result = parsePlanFile(filename, raw) as ParsedPlan
+    expect(result.mealDays).toBe(4)
+  })
+
+  it('batch prose fixture 2026-05-29--2026-05-31: mealDays === 3 (3 days with meals)', () => {
+    const filename = '2026-05-29--2026-05-31.md'
+    const raw = FIXTURES[filename]!
+    const result = parsePlanFile(filename, raw) as ParsedPlan
+    expect(result.mealDays).toBe(3)
+  })
+
+  it('mealDays <= calendar span for all fixtures', () => {
+    for (const [filename, raw] of Object.entries(FIXTURES) as [string, string][]) {
+      const result = parsePlanFile(filename, raw)
+      if (!result) continue
+      const start = new Date(result.windowStart + 'T12:00:00Z')
+      const end   = new Date(result.windowEnd   + 'T12:00:00Z')
+      const span  = Math.round((end.getTime() - start.getTime()) / 86400000) + 1
+      expect(result.mealDays).toBeLessThanOrEqual(span)
+    }
+  })
+
+  it('mealDays >= 1 for all fixtures with meals', () => {
+    for (const [filename, raw] of Object.entries(FIXTURES) as [string, string][]) {
+      const result = parsePlanFile(filename, raw)
+      if (!result) continue
+      if (result.meals.length > 0) {
+        expect(result.mealDays).toBeGreaterThanOrEqual(1)
+      }
+    }
+  })
+
+  it('inline fixture with gap day: 3-day window with only 2 days having meals → mealDays === 2', () => {
+    // A plan window that spans 3 days but only has meals on 2 of them (one gap day)
+    const raw = `---
+window_start: "2026-06-01"
+window_end: "2026-06-03"
+---
+
+## 2026-06-01
+
+**Food:** Cereal and milk
+**Selector:** x
+
+## 2026-06-02
+
+No meals today (rest day)
+
+## 2026-06-03
+
+**Food:** Chicken, rice, and broccoli
+**Selector:** x
+`
+    const result = parsePlanFile('2026-06-01--2026-06-03.md', raw) as ParsedPlan
+    expect(result).not.toBeNull()
+    expect(result.mealDays).toBe(2)
+    // mealDays < calendar span (2 < 3)
+    expect(result.mealDays).toBeLessThan(3)
+  })
+})
+
 // ── V2: tokenizeMealName ──────────────────────────────────────────────────────
 describe('tokenizeMealName — V2 ingredient tokenizer contract', () => {
   it('"chicken, rice, and broccoli" → [chicken, rice, broccoli]', () => {

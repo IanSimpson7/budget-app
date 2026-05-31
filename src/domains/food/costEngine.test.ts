@@ -589,6 +589,72 @@ describe('classifyMealKind — corpus coverage', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
+// CR-02 — windowDays must reflect distinct days-with-meals (mealDays), not span
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('CR-02 — mealDays denominator: 7-day window with 3 meal-days divides by 3', () => {
+  // Scenario: a 7-day calendar span (windowStart..windowEnd) but only 3 days have meals.
+  // The correct denominator is 3 (mealDays), not 7 (calendar span).
+  // Using 7 would understate the daily average by 57% — a C1 failure.
+  it('3-meal-day plan in a 7-day window: windowDays=3 gives correct floor', () => {
+    // 3 identical chicken-and-rice meals across 3 days (out of a 7-day window)
+    const input = makeInput({
+      scheduledMeals: ['chicken and rice', 'chicken and rice', 'chicken and rice'],
+      mealDefinitions: [CHICKEN_DEF],
+      unitCostMap: UNIT_COSTS,
+      portionModel: PORTIONS,
+      windowDays: 3,  // mealDays — correct denominator
+      daysInMonth: 30,
+    })
+    const result = computeFloor(input)
+    // floor = (3 × CHICKEN_RICE_COST / 3) × 30 = CHICKEN_RICE_COST × 30
+    const expectedFloor = CHICKEN_RICE_COST * 30
+    expect(result.floor).toBeCloseTo(expectedFloor, 5)
+    expect(result.isClean).toBe(true)
+  })
+
+  it('if windowDays=7 were used instead of 3, floor would be WRONG (57% undercount)', () => {
+    // This proves why the denominator matters
+    const correctInput = makeInput({
+      scheduledMeals: ['chicken and rice', 'chicken and rice', 'chicken and rice'],
+      mealDefinitions: [CHICKEN_DEF],
+      unitCostMap: UNIT_COSTS,
+      portionModel: PORTIONS,
+      windowDays: 3,   // correct: meal-days
+      daysInMonth: 30,
+    })
+    const wrongInput = makeInput({
+      scheduledMeals: ['chicken and rice', 'chicken and rice', 'chicken and rice'],
+      mealDefinitions: [CHICKEN_DEF],
+      unitCostMap: UNIT_COSTS,
+      portionModel: PORTIONS,
+      windowDays: 7,   // wrong: calendar span (understates floor)
+      daysInMonth: 30,
+    })
+    const correct = computeFloor(correctInput)
+    const wrong   = computeFloor(wrongInput)
+    // Correct floor is (3/3) × cost × 30 = cost × 30
+    // Wrong  floor is (3/7) × cost × 30 = 0.43 × cost × 30 — understated
+    expect(correct.floor).toBeGreaterThan(wrong.floor)
+    // Ratio should be 7/3
+    expect(correct.floor / wrong.floor).toBeCloseTo(7 / 3, 5)
+  })
+
+  it('ParsedPlan interface in costEngine now includes mealDays field', () => {
+    // The costEngine ParsedPlan mirror must include mealDays to match the parser
+    // This is a compile-time check — verified via type assignment in the test
+    const plan: import('./costEngine').ParsedPlan = {
+      windowStart: '2026-06-01',
+      windowEnd:   '2026-06-07',
+      meals:       ['chicken and rice'],
+      mealDays:    3,  // must exist on the interface
+    }
+    expect(plan.mealDays).toBe(3)
+    expect(plan.meals).toHaveLength(1)
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
 // V6 — kind-aware fallback in computeFloor
 // ─────────────────────────────────────────────────────────────────────────────
 

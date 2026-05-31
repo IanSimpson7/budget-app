@@ -131,11 +131,16 @@ export interface CostEngineResult {
  * Matches the interface that planParser.ts (Plan 04-02) exports.
  * Defined here to keep costEngine.ts compilable before planParser.ts lands in
  * parallel Wave-2 builds; once both plans merge this remains compatible.
+ *
+ * CR-02: mealDays is the count of distinct calendar days with >= 1 meal slot.
+ * The atom uses Math.max(selectedPlan.mealDays, 1) as the windowDays argument
+ * to computeFloor — NOT planDaySpan (the raw calendar span).
  */
 export interface ParsedPlan {
   windowStart: string   // YYYY-MM-DD
   windowEnd:   string   // YYYY-MM-DD
   meals:       string[] // normalized meal-name strings
+  mealDays:    number   // CR-02: distinct days-with-meals (the correct daily-average denominator)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
