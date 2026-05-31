@@ -124,6 +124,15 @@ Verified against `../schedule-meal-coordinator/plans/*.md` (5 live files). Spec 
 - Pages source = "GitHub Actions" (artifact flow), not a gh-pages branch. All actions are official GitHub-owned, pinned to MAJOR tags (T-01-13).
 - Live URL: https://iansimpson7.github.io/budget-app/ — phone-verified by Ian.
 
+### Code review (Phase 4, deep — 2026-05-30) — all findings closed
+
+- Deep review (`04-REVIEW.md`) of 13 source files found 2 C1 BLOCKERS + 6 warnings. Fixed in gap plan **04-07** + follow-up:
+  - **CR-01** (ratified Reading A by Ian): displayed live floor ratcheted to `max(result.floor, allTimeHighWater)` — never falls month-over-month; `solvencyFloor`/write-back stay on raw value.
+  - **CR-02**: `ParsedPlan.mealDays` (distinct days-with-meals, both prose & table headers) is the daily-average denominator, not calendar span — un-logged days can't understate the floor.
+  - **WR-05 + WR-01**: JSON import validates finiteness of `foodFloorMeta`, `unitCostMap`, `portionModel`, **plus `flavorLine.amount` and `mealDefinitions[].flatCost`** (1e999→Infinity tamper vector) before the transaction — no NaN/Infinity floor poisoning.
+  - **WR-02**: write-back `.catch`; one-cycle lag proven safe by the CR-01 ratchet.
+- Re-review (`04-REVIEW-2.md`) confirmed all closed; only cosmetic IN-01 (dead `?? 0`) left. 965 tests, tsc clean.
+
 ### Key Decisions (added 04-06)
 
 - **FALLBACK_CEILING_SNACK = 5**: snack/shake occasions get a $5 conservative-high ceiling; full meals stay at $15 (FALLBACK_CEILING_MEAL). FALLBACK_CEILING_PER_MEAL kept as @deprecated alias.
