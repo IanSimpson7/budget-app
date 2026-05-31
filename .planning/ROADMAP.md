@@ -21,7 +21,7 @@ Every phase's plans must structurally enforce these — not merely document them
 - [x] **Phase 1: Foundation, Storage, Deploy** — Vite+React+TS app deployed to GitHub Pages with IndexedDB persistence and JSON export/import on day one
 - [ ] **Phase 2: Income Model with Two Floors** — Ian can enter checks (typed + paste-parse) and see income-to-date against both passive floor and defended line
 - [x] **Phase 3: Expense Model + Sinking Funds** — Protected vs gateable line items, derived survival floor, generic sinking-fund primitive (car insurance instance) (completed 2026-05-29)
-- [ ] **Phase 4: Food Contract (Locked Floor)** — Read-only SMC integration: ingredient-keyed food floor pricing with locked UI, fallback-high, unpriced-ingredient guard
+- [x] **Phase 4: Food Contract (Locked Floor)** — Read-only SMC integration: ingredient-keyed food floor pricing with locked UI, fallback-high, unpriced-ingredient guard (completed 2026-05-31)
 - [ ] **Phase 5: Surplus Router + Unified Dashboard** — EF-first recommendation engine, gradual sweep, backfill-vs-sweep gate, phone-readable dashboard
 
 ---
@@ -97,7 +97,7 @@ Every phase's plans must structurally enforce these — not merely document them
   5. When no current plan file exists or the plan is stale, the floor falls back to the last-known value or high-water mark (never lower) and shows a staleness flag
   6. Flavor/condiment line displays as a separate fixed monthly amount (~$50/mo seed, editable), excluded from per-meal pricing, treated as PROTECTED
   7. Food panel shows the discretionary food layer (gateable) side-by-side with the protected floor (locked)
-**Plans:** 6/6 plans executed
+**Plans:** 7/7 plans complete
 - [x] 04-01-PLAN.md — Storage foundation: schema v3→v4 + mealDefinitions table + 4 food settings singletons + CRUD/observers/seed/export round-trip + C1 absence-proofs (FOOD-02/04/05/10/12/13; V6)
 - [x] 04-02-PLAN.md — SMC plan parser + 5 hermetic fixtures: parsePlanFile both filename + both body formats, 14-meal corpus, null-on-failure (FOOD-01/03; V1/V2)
 - [x] 04-03-PLAN.md — Cost engine (pure): Σ macro-bearing cost, fallback-high on every gap, monthly derivation, never-lower stale path (FOOD-06/07/08/09, EDGE-02/03; V3/V4/V5)
@@ -132,7 +132,7 @@ Every phase's plans must structurally enforce these — not merely document them
 | 1. Foundation, Storage, Deploy | 3/3 | Complete | 2026-05-28 |
 | 2. Income Model with Two Floors | 0/5 | Planned | - |
 | 3. Expense Model + Sinking Funds | 3/3 | Complete   | 2026-05-29 |
-| 4. Food Contract (Locked Floor) | 4/5 | In Progress|  |
+| 4. Food Contract (Locked Floor) | 7/7 | Complete   | 2026-05-31 |
 | 5. Surplus Router + Unified Dashboard | 0/? | Not started | - |
 
 ---
