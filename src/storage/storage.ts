@@ -554,7 +554,84 @@ export async function importAll(file: File): Promise<void> {
   await replaceAll(migrated)
 }
 
+/**
+ * Returns true iff val is a finite number (not NaN, not Infinity, not null, not string).
+ * Mirrors the Number.isFinite guard used in saveUnitCostMap, savePortionModel, etc.
+ */
+function isFiniteNumber(val: unknown): val is number {
+  return typeof val === 'number' && Number.isFinite(val)
+}
+
+/**
+ * WR-05 (C1): validate food-domain financial fields before import.
+ * Mirrors the guards on saveUnitCostMap, savePortionModel, and saveFlavorLine
+ * (the normal write path). A tampered backup must not bypass these guards via
+ * the import path and corrupt the protected floor.
+ *
+ * Rejection cases:
+ *   - null where a finite number is expected (JSON serializes NaN/Infinity as null)
+ *   - String "NaN" or any non-numeric type in a financial field
+ *   - Any value for which Number.isFinite() returns false
+ *
+ * Throws ImportError('INVALID_ENVELOPE') on any invalid value.
+ * Called BEFORE the database transaction so a failed validation leaves the DB untouched.
+ */
+function validateFoodSettingsForImport(settings: Record<string, unknown>): void {
+  // foodFloorMeta: lastComputedFloor and allTimeHighWater must be proper finite numbers
+  const rawMeta = settings['foodFloorMeta']
+  if (rawMeta !== undefined && isPlainObject(rawMeta)) {
+    const meta = rawMeta as Record<string, unknown>
+    for (const field of ['lastComputedFloor', 'allTimeHighWater']) {
+      const val = meta[field]
+      // Only validate if the field is present — if absent, storage defaults to 0 (fine)
+      if (Object.prototype.hasOwnProperty.call(meta, field)) {
+        if (!isFiniteNumber(val)) {
+          throw new ImportError('INVALID_ENVELOPE')
+        }
+      }
+    }
+  }
+
+  // unitCostMap: all costPerUnit values must be finite numbers
+  const rawUnitCostMap = settings['unitCostMap']
+  if (rawUnitCostMap !== undefined && Array.isArray(rawUnitCostMap)) {
+    for (const entry of rawUnitCostMap) {
+      if (isPlainObject(entry)) {
+        const e = entry as Record<string, unknown>
+        if (Object.prototype.hasOwnProperty.call(e, 'costPerUnit')) {
+          if (!isFiniteNumber(e['costPerUnit'])) {
+            throw new ImportError('INVALID_ENVELOPE')
+          }
+        }
+      }
+    }
+  }
+
+  // portionModel: all portionSize values must be finite numbers
+  const rawPortionModel = settings['portionModel']
+  if (rawPortionModel !== undefined && Array.isArray(rawPortionModel)) {
+    for (const entry of rawPortionModel) {
+      if (isPlainObject(entry)) {
+        const e = entry as Record<string, unknown>
+        if (Object.prototype.hasOwnProperty.call(e, 'portionSize')) {
+          if (!isFiniteNumber(e['portionSize'])) {
+            throw new ImportError('INVALID_ENVELOPE')
+          }
+        }
+      }
+    }
+  }
+}
+
 async function replaceAll(data: SchemaV1Data): Promise<void> {
+  // WR-05 (C1): validate food-domain financial fields BEFORE opening the transaction.
+  // Validation outside the transaction ensures that if validation fails, the database
+  // is not modified at all — no partial-write risk. The existing expense/fund validations
+  // run inside the transaction (they throw, which aborts it); food validation runs here
+  // for an equivalent no-partial-write guarantee.
+  const settings = data.settings ?? {}
+  validateFoodSettingsForImport(settings)
+
   await db.transaction(
     'rw',
     [db.incomeChecks, db.expenseItems, db.sinkingFunds, db.mealDefinitions, db.accounts, db.settings],
@@ -568,7 +645,6 @@ async function replaceAll(data: SchemaV1Data): Promise<void> {
         db.settings.clear(),
       ])
 
-      const settings = data.settings ?? {}
       for (const [key, value] of Object.entries(settings)) {
         await db.settings.put({ key, value })
       }
