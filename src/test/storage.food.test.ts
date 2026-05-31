@@ -430,6 +430,41 @@ describe('WR-05: import rejects non-finite food-domain fields (C1 tamper guard)'
     await expect(storage.importAll(makeFile(makeRawEnvelope(tampered)))).rejects.toThrow()
   })
 
+  // WR-01: flavorLine.amount and mealDefinitions[].flatCost also bypass their save guards
+  // via the import path. 1e999 parses to Infinity — a valid JSON *number* that slips past
+  // a null/undefined check yet is non-finite — the real tamper vector for these fields.
+  const makeRawEnvelopeFull = (settingsJson: string, mealDefsJson = '[]') =>
+    `{"schemaVersion":3,"exportedAt":"2026-01-01T00:00:00Z","appVersion":"0.0.0","data":{"incomeChecks":[],"expenseItems":[],"sinkingFunds":[],"mealDefinitions":${mealDefsJson},"accounts":[],"settings":${settingsJson}}}`
+
+  it('WR-01: rejects import when flavorLine.amount is Infinity (1e999)', async () => {
+    const tampered = makeRawEnvelopeFull('{"flavorLine":{"amount":1e999}}')
+    await expect(storage.importAll(makeFile(tampered))).rejects.toThrow()
+  })
+
+  it('WR-01: rejects import when flavorLine.amount is null', async () => {
+    const tampered = makeRawEnvelopeFull('{"flavorLine":{"amount":null}}')
+    await expect(storage.importAll(makeFile(tampered))).rejects.toThrow()
+  })
+
+  it('WR-01: rejects import when mealDefinitions[].flatCost is Infinity (1e999)', async () => {
+    const mealDefs = '[{"mealName":"qdoba bowl","type":"flat-cost","ingredients":[],"flatCost":1e999}]'
+    const tampered = makeRawEnvelopeFull('{}', mealDefs)
+    await expect(storage.importAll(makeFile(tampered))).rejects.toThrow()
+  })
+
+  it('WR-01: rejects import when mealDefinitions[].flatCost is a string', async () => {
+    const mealDefs = '[{"mealName":"qdoba bowl","type":"flat-cost","ingredients":[],"flatCost":"bad"}]'
+    const tampered = makeRawEnvelopeFull('{}', mealDefs)
+    await expect(storage.importAll(makeFile(tampered))).rejects.toThrow()
+  })
+
+  it('WR-01: accepts mealDefinitions[].flatCost = null (valid "unset" → fallback-high)', async () => {
+    // null/undefined flatCost is the legitimate unset state — must NOT be rejected.
+    const mealDefs = '[{"mealName":"qdoba bowl","type":"flat-cost","ingredients":[],"flatCost":null}]'
+    const clean = makeRawEnvelopeFull('{}', mealDefs)
+    await expect(storage.importAll(makeFile(clean))).resolves.not.toThrow()
+  })
+
   it('no partial write: after a rejected import, the DB is unchanged', async () => {
     // Pre-populate a valid state
     await storage.saveFoodFloorMeta({ lastComputedFloor: 500, allTimeHighWater: 600, lastRefinedFromReceipts: null })

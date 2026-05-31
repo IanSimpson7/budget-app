@@ -576,7 +576,10 @@ function isFiniteNumber(val: unknown): val is number {
  * Throws ImportError('INVALID_ENVELOPE') on any invalid value.
  * Called BEFORE the database transaction so a failed validation leaves the DB untouched.
  */
-function validateFoodSettingsForImport(settings: Record<string, unknown>): void {
+function validateFoodSettingsForImport(
+  settings: Record<string, unknown>,
+  mealDefinitions?: unknown,
+): void {
   // foodFloorMeta: lastComputedFloor and allTimeHighWater must be proper finite numbers
   const rawMeta = settings['foodFloorMeta']
   if (rawMeta !== undefined && isPlainObject(rawMeta)) {
@@ -621,6 +624,34 @@ function validateFoodSettingsForImport(settings: Record<string, unknown>): void 
       }
     }
   }
+
+  // WR-01 (C1): flavorLine.amount must be a finite number (mirrors saveFlavorLine guard).
+  const rawFlavorLine = settings['flavorLine']
+  if (rawFlavorLine !== undefined && isPlainObject(rawFlavorLine)) {
+    const fl = rawFlavorLine as Record<string, unknown>
+    if (Object.prototype.hasOwnProperty.call(fl, 'amount')) {
+      if (!isFiniteNumber(fl['amount'])) {
+        throw new ImportError('INVALID_ENVELOPE')
+      }
+    }
+  }
+
+  // WR-01 (C1): mealDefinitions[].flatCost — when PRESENT and not unset (null/undefined),
+  // it must be finite. A non-finite flatCost (e.g. 1e999 → Infinity, which parses as a
+  // valid JSON number) would flow into computeFloor's totalScheduledCost and produce a
+  // NaN/Infinity floor, then poison allTimeHighWater via the clean-path write-back.
+  // null/undefined flatCost is the VALID "unset" state (triggers fallback-high) and is allowed.
+  if (Array.isArray(mealDefinitions)) {
+    for (const entry of mealDefinitions) {
+      if (isPlainObject(entry)) {
+        const e = entry as Record<string, unknown>
+        const flatCost = e['flatCost']
+        if (flatCost !== undefined && flatCost !== null && !isFiniteNumber(flatCost)) {
+          throw new ImportError('INVALID_ENVELOPE')
+        }
+      }
+    }
+  }
 }
 
 async function replaceAll(data: SchemaV1Data): Promise<void> {
@@ -630,7 +661,7 @@ async function replaceAll(data: SchemaV1Data): Promise<void> {
   // run inside the transaction (they throw, which aborts it); food validation runs here
   // for an equivalent no-partial-write guarantee.
   const settings = data.settings ?? {}
-  validateFoodSettingsForImport(settings)
+  validateFoodSettingsForImport(settings, data.mealDefinitions)
 
   await db.transaction(
     'rw',
